@@ -1,0 +1,27 @@
+[project]
+name = "vehicle-reid"
+version = "0.1.0"
+description = "Vehicle reidentification dissertation project"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.0",
+    "numpy>=2.2.2",
+    "opencv-contrib-python>=4.11.0.86",
+    "pandas>=2.2.3",
+    "torch>=2.5.1",
+]
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.24.0",
+]
+
+[tool.basedpyright]
+useLibraryCodeForTypes = false
+typeCheckingMode = "standard"
+reportAttributeAccessIssue = false
+reportArgumentType = false
+reportCallIssue = false
+venv = ".venv"
+venvPath = "."
