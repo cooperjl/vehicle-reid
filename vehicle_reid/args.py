@@ -36,7 +36,7 @@ def add_subparser(name: str, help: str):
     return subparsers.add_parser(name=name, help=help)
 
 def dir_path(path):
-    """Wrapper function to check whether the given path is valid"""
+    """Wrapper function to check whether the given path is a valid directory."""
     if os.path.isdir(path):
         return path
     else:

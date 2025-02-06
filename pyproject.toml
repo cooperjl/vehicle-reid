@@ -10,6 +10,8 @@ dependencies = [
     "opencv-contrib-python>=4.11.0.86",
     "pandas>=2.2.3",
     "torch>=2.5.1",
+    "torchvision>=0.21.0",
+    "tqdm>=4.67.1",
 ]
 
 [dependency-groups]
