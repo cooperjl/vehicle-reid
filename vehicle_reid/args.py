@@ -16,6 +16,12 @@ class DEFAULTS:
     height: int = 224
     data_path: str = "data"
 
+DATASETS = [
+    "vric",
+    "vehicle_id",
+    "veri",
+]
+
 COMMANDS = [
     gms,
     test,

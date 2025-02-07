@@ -1,12 +1,12 @@
-import argparse
 import json
 import os
+from argparse import Namespace
 
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
 
-import vehicle_reid.args as args
+from vehicle_reid import args
 from vehicle_reid.datasets import VRIC
 from vehicle_reid.utils import NumpyEncoder
 
@@ -14,7 +14,7 @@ from vehicle_reid.utils import NumpyEncoder
 def parse_arguments():
     parser = args.add_subparser(name="gms", help="compute GMS matches")
     parser.add_argument('dataset', metavar='dataset',
-                        choices=["vric", "vehicleid", "veri"],
+                        choices=args.DATASETS,
                         help='the name of the dataset to compute')
     parser.add_argument('--width', type=int,
                         default=args.DEFAULTS.width,
@@ -83,7 +83,7 @@ def process_class(image_paths: np.ndarray, width: int, height: int, orb: cv.ORB,
     return adj_matrix
 
 
-def main(args: argparse.Namespace):
+def main(args: Namespace):
     match args.dataset:
         case "vric":
             root = os.path.join(args.data_path, "vric")
