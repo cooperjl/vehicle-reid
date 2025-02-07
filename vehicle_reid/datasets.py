@@ -17,11 +17,11 @@ class VehicleReIdDataset(Dataset):
     """
 
     def __init__(
-            self, 
-            root: str,
-            split: str='train',
-            transform: Optional[Callable]=None,
-            target_transform: Optional[Callable]=None
+        self, 
+        root: str,
+        split: str='train',
+        transform: Optional[Callable]=None,
+        target_transform: Optional[Callable]=None
     ) -> None:
         self.root = root
         self.split = split

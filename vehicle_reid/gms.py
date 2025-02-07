@@ -1,6 +1,7 @@
 import json
 import os
 from argparse import Namespace
+from typing import Dict, List
 
 import cv2 as cv
 import numpy as np
@@ -31,7 +32,33 @@ def parse_arguments():
     parser.set_defaults(func=main)
 
 
-def gms_matches(bf: cv.BFMatcher, size1: np.ndarray, size2: np.ndarray, kp1: tuple, des1: tuple, kp2: tuple, des2: tuple):
+def gms_matches(
+    bf: cv.BFMatcher,
+    size1: np.ndarray, size2: np.ndarray,
+    kp1: np.ndarray, des1: np.ndarray,
+    kp2: np.ndarray, des2: np.ndarray,
+) -> int:
+    """Computes the number of GMS matches between two images.
+
+    Takes the keypoints and descriptors instead of the images to reduce repetition of expensive operations.
+
+    Parameters
+    ----------
+    bf : cv.BFMatcher
+        opencv brute force matcher
+    size1 : np.ndarray
+        2x2 array containing the width and height of image 1
+    size2 : np.ndarray
+        2x2 array containing the width and height of image 2
+    kp1: np.ndarray
+        ORB keypoints from image 1
+    des1: np.ndarray
+        ORB descriptor for image 1
+    kp2: np.ndarray
+        ORB keypoints from image 2
+    des2: np.ndarray
+        ORB descriptor for image 2
+    """
     if des1 is None or des2 is None or len(des1) == 0 or len(des2) == 0:
         # print("WARN: The GMS descriptors are empty.") 
         return 0
@@ -55,6 +82,28 @@ def gms_matches(bf: cv.BFMatcher, size1: np.ndarray, size2: np.ndarray, kp1: tup
 
 
 def process_class(image_paths: np.ndarray, width: int, height: int, orb: cv.ORB, bf: cv.BFMatcher, pbar: tqdm) -> np.ndarray:
+    """Calculate the adjacency matrix of a given class of images.
+
+    Parameters
+    ----------
+    image_paths : np.ndarray
+        array of paths to every image in the class
+    width : int
+        width of the images
+    height : int
+        height of the images
+    orb : cv.ORB
+        opencv ORB object for feature detection and description
+    bf : cv.BFMatcher
+        opencv brute force matcher for use in gms
+    pbar : tqdm
+        tqdm progress bar for manual updates managed in this function
+
+    Returns
+    -------
+    adj_matrix : np.ndarray
+        adjacency matrix of gms matches for the given class.
+    """
     n = len(image_paths)
     adj_matrix = np.zeros((n, n), dtype=np.int32)
 
@@ -81,6 +130,30 @@ def process_class(image_paths: np.ndarray, width: int, height: int, orb: cv.ORB,
         pbar.update(1)
     
     return adj_matrix
+
+
+def load_data(gms_path: str) -> Dict[str, List[List[str]]]:
+    """Load the gms data for use in training.
+
+    Parameters
+    ----------
+    gms_path : str
+        path of the directory storing the adjacency matrices of the dataset.
+
+    Returns
+    -------
+    gms : Dict[str, List[List[str]]]
+        dict of classes and their adjacency matrices.
+    """
+    gms = {}
+    entries = sorted(os.listdir(gms_path))
+
+    for name in entries:
+        with open(os.path.join(gms_path, name), 'r') as f:
+            s = os.path.splitext(name)[0]
+            gms[s] = json.load(f)
+
+    return gms
 
 
 def main(args: Namespace):
