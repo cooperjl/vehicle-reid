@@ -1,11 +1,9 @@
 import argparse
 import os
-
 from dataclasses import dataclass
 
-import vehicle_reid.gms as gms
-import vehicle_reid.test as test
-import vehicle_reid.train as train
+from vehicle_reid import gms, test, train
+from vehicle_reid.datasets import visualise
 
 parser = argparse.ArgumentParser()
 subparsers = parser.add_subparsers(required=True, metavar="command")
@@ -15,6 +13,7 @@ class DEFAULTS:
     width: int = 224
     height: int = 224
     data_path: str = "data"
+    gms_path: str = "gms"
 
 DATASETS = [
     "vric",
@@ -26,6 +25,7 @@ COMMANDS = [
     gms,
     test,
     train,
+    visualise,
 ]
 
 def parse_command():

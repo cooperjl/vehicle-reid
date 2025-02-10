@@ -1,14 +1,13 @@
 import json
 import os
 from argparse import Namespace
-from typing import Dict, List
 
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
 
 from vehicle_reid import args
-from vehicle_reid.datasets import VRIC
+from vehicle_reid.datasets import match_dataset
 from vehicle_reid.utils import NumpyEncoder
 
 
@@ -27,7 +26,7 @@ def parse_arguments():
                         default=args.DEFAULTS.data_path,
                         help='path where the datasets are stored (default: %(default)s)')
     parser.add_argument('--output-path', type=args.dir_path,
-                        default='gms',
+                        default=args.DEFAULTS.gms_path,
                         help='path to output gms matches (default: %(default)s)')
     parser.set_defaults(func=main)
 
@@ -58,6 +57,11 @@ def gms_matches(
         ORB keypoints from image 2
     des2: np.ndarray
         ORB descriptor for image 2
+
+    Returns
+    -------
+    gms_matches:
+        number of gms matches calculated from the images
     """
     if des1 is None or des2 is None or len(des1) == 0 or len(des2) == 0:
         # print("WARN: The GMS descriptors are empty.") 
@@ -132,7 +136,7 @@ def process_class(image_paths: np.ndarray, width: int, height: int, orb: cv.ORB,
     return adj_matrix
 
 
-def load_data(gms_path: str) -> Dict[str, List[List[str]]]:
+def load_data(gms_path: str) -> dict[str, list[list[str]]]:
     """Load the gms data for use in training.
 
     Parameters
@@ -142,7 +146,7 @@ def load_data(gms_path: str) -> Dict[str, List[List[str]]]:
 
     Returns
     -------
-    gms : Dict[str, List[List[str]]]
+    gms : dict[str, list[list[str]]]
         dict of classes and their adjacency matrices.
     """
     gms = {}
@@ -157,12 +161,8 @@ def load_data(gms_path: str) -> Dict[str, List[List[str]]]:
 
 
 def main(args: Namespace):
-    match args.dataset:
-        case "vric":
-            root = os.path.join(args.data_path, "vric")
-            dataset = VRIC(root=root, split="train") # train hardcoded as gms matches should only ever use the train set.
-        case _:
-            raise ValueError("TODO: other datasets")
+    # train hardcoded as gms matches should only ever use the train set.
+    dataset = match_dataset(args, "train")
 
     output = os.path.join(args.output_path, args.dataset)
     if(not os.path.exists(output)):
@@ -171,11 +171,24 @@ def main(args: Namespace):
 
     orb = cv.ORB_create(nfeatures=10000, fastThreshold=0)
     bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=False)
+
+    grouped = dataset.get_grouped()
+
+    # create the index for the gms values
+    index_dict = {}
+    for label, images in grouped:
+        for idx, image in enumerate(images):
+            # idx is the index of the image in the class adjacency matrix
+            # "<image_name>.jpg": [label, idx]
+            index_dict[os.path.basename(image)] = (label, idx)
+
+    with open(os.path.join(output, "index.json"), 'w') as f:
+        json.dump(index_dict, f)
     
     total_iters = len(dataset)
 
     with tqdm(total=total_iters) as pbar:
-        for label, images in dataset.get_grouped():
+        for label, images in grouped:
             filename = os.path.join(output, f"{label}.json")
 
             # only compute if the file does not exist, allowing to continue from previous stopping point
