@@ -28,7 +28,7 @@ def visualise(dataset: VehicleReIdDataset):
         ax.axis('off')
 
         sample_idx = torch.randint(len(dataset), size=(1,)).item()
-        img, label = dataset[sample_idx]
+        img, label, _ = dataset[sample_idx]
         img = img.permute(1, 2, 0)
         plt.title(label)
         plt.imshow(img)

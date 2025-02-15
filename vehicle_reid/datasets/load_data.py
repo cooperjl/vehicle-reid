@@ -15,4 +15,4 @@ def load_data(args: Namespace, split: str, batch_size: int = 16):
     # TODO: num workers 
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1)
 
-    return dataloader
+    return dataset, dataloader

@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from vehicle_reid import args
 from vehicle_reid.datasets import match_dataset
-from vehicle_reid.utils import NumpyEncoder
+from vehicle_reid.utils import NumpyEncoder, pad_label
 
 
 def parse_arguments():
@@ -153,9 +153,10 @@ def load_data(gms_path: str) -> dict[str, list[list[str]]]:
     entries = sorted(os.listdir(gms_path))
 
     for name in entries:
-        with open(os.path.join(gms_path, name), 'r') as f:
-            s = os.path.splitext(name)[0]
-            gms[s] = json.load(f)
+        if name != "index.json":
+            with open(os.path.join(gms_path, name), 'r') as f:
+                s = os.path.splitext(name)[0]
+                gms[s] = np.array(json.load(f))
 
     return gms
 
@@ -175,21 +176,29 @@ def main(args: Namespace):
     grouped = dataset.get_grouped()
 
     # create the index for the gms values
-    index_dict = {}
+    image_index = {}
+    label_index = {} # guarantee the order matches the rest of script for future loading
     for label, images in grouped:
+        padded_label = pad_label(label, args.dataset)
+        # "label": [<image_name>.jpg, ..., <image_name>.jpg]
+        label_index[padded_label] = [os.path.basename(image) for image in images]
+        # idx is the index of the image in the class adjacency matrix
         for idx, image in enumerate(images):
-            # idx is the index of the image in the class adjacency matrix
             # "<image_name>.jpg": [label, idx]
-            index_dict[os.path.basename(image)] = (label, idx)
+            image_index[os.path.basename(image)] = (padded_label, idx)
 
-    with open(os.path.join(output, "index.json"), 'w') as f:
-        json.dump(index_dict, f)
+    with open(os.path.join(output, "image_index.json"), 'w') as f:
+        json.dump(image_index, f, cls=NumpyEncoder)
     
+    with open(os.path.join(output, "label_index.json"), 'w') as f:
+        json.dump(label_index, f, cls=NumpyEncoder)
+
     total_iters = len(dataset)
 
     with tqdm(total=total_iters) as pbar:
         for label, images in grouped:
-            filename = os.path.join(output, f"{label}.json")
+            padded_label = pad_label(label, args.dataset)
+            filename = os.path.join(output, f"{padded_label}.json")
 
             # only compute if the file does not exist, allowing to continue from previous stopping point
             if not os.path.isfile(filename):

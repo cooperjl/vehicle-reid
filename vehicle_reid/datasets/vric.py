@@ -21,10 +21,15 @@ class VRIC(VehicleReIdDataset):
             self, 
             root: str,
             split: str='train',
+            index: Optional[str]=None,
             transform: Optional[Callable]=None,
             target_transform: Optional[Callable]=None
     ) -> None:
-        super().__init__(root, split, transform, target_transform)
+        super().__init__(root, split, index, transform, target_transform)
+        
+        self.name = "vric"
+        self.name_col = 0
+        self.id_col = 1
 
         match split:
             case 'train':

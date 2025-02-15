@@ -1,6 +1,6 @@
 import argparse
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 from vehicle_reid import gms, test, train
 from vehicle_reid.datasets import visualise
@@ -31,6 +31,13 @@ COMMANDS = [
 def parse_command():
     for command in COMMANDS:
         command.parse_arguments()
+
+    parser.set_defaults(
+        width=DEFAULTS.width, 
+        height=DEFAULTS.height,
+        data_path=DEFAULTS.data_path,
+        gms_path=DEFAULTS.gms_path,
+    )
 
     args = parse()
     args.func(args)
