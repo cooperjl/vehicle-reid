@@ -1,35 +1,16 @@
 import json
+import logging
 import os
-from argparse import Namespace
 
 import cv2 as cv
 import numpy as np
 from tqdm import tqdm
 
-from vehicle_reid import args
+from vehicle_reid.config import cfg
 from vehicle_reid.datasets import match_dataset
 from vehicle_reid.utils import NumpyEncoder, pad_label
 
-
-def parse_arguments():
-    parser = args.add_subparser(name="gms", help="compute GMS matches")
-    parser.add_argument('dataset', metavar='dataset',
-                        choices=args.DATASETS,
-                        help='the name of the dataset to compute')
-    parser.add_argument('--width', type=int,
-                        default=args.DEFAULTS.width,
-                        help='width to resize images to (default: %(default)s)')
-    parser.add_argument('--height', type=int,
-                        default=args.DEFAULTS.height,
-                        help='width to resize images to (default: %(default)s)')
-    parser.add_argument('--data-path', type=args.dir_path,
-                        default=args.DEFAULTS.data_path,
-                        help='path where the datasets are stored (default: %(default)s)')
-    parser.add_argument('--output-path', type=args.dir_path,
-                        default=args.DEFAULTS.gms_path,
-                        help='path to output gms matches (default: %(default)s)')
-    parser.set_defaults(func=main)
-
+logger = logging.getLogger(__name__)
 
 def gms_matches(
     bf: cv.BFMatcher,
@@ -64,11 +45,13 @@ def gms_matches(
         number of gms matches calculated from the images
     """
     if des1 is None or des2 is None or len(des1) == 0 or len(des2) == 0:
-        # print("WARN: The GMS descriptors are empty.") 
+        logger.warning("Empty gms descriptors, skipping...")
         return 0
 
     if des1.shape[1] != des2.shape[1]:
-        raise ValueError("ERROR: The GMS descriptors are of different sizes.")
+        error = "The GMS descriptors are of different sizes"
+        logger.error(error)
+        raise ValueError(error)
 
     if(des1.dtype != [np.uint8, np.float32]) or (des1.dtype != [np.uint8, np.float32]):
         des1 = des1.astype(np.uint8)
@@ -161,14 +144,14 @@ def load_data(gms_path: str) -> dict[str, list[list[str]]]:
     return gms
 
 
-def main(args: Namespace):
+def main():
     # train hardcoded as gms matches should only ever use the train set.
-    dataset = match_dataset(args, "train")
+    dataset = match_dataset("train")
 
-    output = os.path.join(args.output_path, args.dataset)
+    output = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
     if(not os.path.exists(output)):
         os.mkdir(output)
-        print(f"INFO: output directory created at: {output}")
+        logger.info(f"Output directory created at: {output}")
 
     orb = cv.ORB_create(nfeatures=10000, fastThreshold=0)
     bf = cv.BFMatcher(cv.NORM_HAMMING, crossCheck=False)
@@ -179,7 +162,7 @@ def main(args: Namespace):
     image_index = {}
     label_index = {} # guarantee the order matches the rest of script for future loading
     for label, images in grouped:
-        padded_label = pad_label(label, args.dataset)
+        padded_label = pad_label(label, cfg.DATASET.NAME)
         # "label": [<image_name>.jpg, ..., <image_name>.jpg]
         label_index[padded_label] = [os.path.basename(image) for image in images]
         # idx is the index of the image in the class adjacency matrix
@@ -197,18 +180,18 @@ def main(args: Namespace):
 
     with tqdm(total=total_iters) as pbar:
         for label, images in grouped:
-            padded_label = pad_label(label, args.dataset)
+            padded_label = pad_label(label, cfg.DATASET.NAME)
             filename = os.path.join(output, f"{padded_label}.json")
 
             # only compute if the file does not exist, allowing to continue from previous stopping point
             if not os.path.isfile(filename):
-                pbar.set_description(f"Processing {args.dataset} gms matches for class {label:4} with {len(images):2} images")
-                adj_matrix = process_class(images.to_numpy(), args.width, args.height, orb, bf, pbar)
+                pbar.set_description(f"Processing {cfg.DATASET.NAME} gms matches for class {label:4} with {len(images):2} images")
+                adj_matrix = process_class(images.to_numpy(), cfg.INPUT.WIDTH, cfg.INPUT.HEIGHT, orb, bf, pbar)
 
                 with open(filename, 'w') as f:
                     json.dump(adj_matrix, f, cls=NumpyEncoder)
             else:
                 pbar.update(len(images))
 
-    print(f"Processing complete. Outputs written to {output}")
+    logger.info(f"Processing complete. Outputs written to {output}")
 

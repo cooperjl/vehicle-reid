@@ -23,11 +23,11 @@ class TestEval(unittest.TestCase):
         
         args.dataset = "veri"
         
-        model = vehicle_reid.model.resnet50(VeRi.num_classes, pretrain=False)
+        model = vehicle_reid.model.cresnet50(VeRi.num_classes, pretrain=False)
         model = model.to(device)
         
         try:
-            vehicle_reid.eval.eval_model(model, args)
+            vehicle_reid.eval.eval_model(model)
         except Exception as e:
             self.fail(f"eval function faced an error: {e}")
 

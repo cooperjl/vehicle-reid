@@ -11,7 +11,8 @@ import torch.nn as nn
 import torchvision.transforms.v2 as transforms
 from tqdm import tqdm
 
-from vehicle_reid import args, gms, losses, utils
+from vehicle_reid import gms, losses, utils
+from vehicle_reid.config import cfg
 from vehicle_reid.datasets import load_data
 from vehicle_reid.eval import eval_model
 from vehicle_reid.model import cresnet50
@@ -22,38 +23,11 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 triplet_loss_fn = losses.TripletLoss()
 ce_loss_fn = losses.CrossEntropyLoss()
 
-CFG = Namespace()
 rng = np.random.default_rng()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+batch_size = cfg.SOLVER.BATCH_SIZE
 
 scaler = torch.GradScaler()
-
-def parse_arguments():
-    parser = args.add_subparser(name="train", help="train the model")
-    parser.add_argument('dataset', metavar='dataset',
-                        choices=args.DATASETS,
-                        help='the name of the dataset to train on')
-    parser.add_argument('--data-path', type=args.dir_path,
-                        default=args.DEFAULTS.data_path,
-                        help='path where the datasets are stored (default: %(default)s)')
-    parser.add_argument('--gms-path', type=args.dir_path,
-                        default=args.DEFAULTS.gms_path,
-                        help='path to load gms matches from (default: %(default)s)')
-    parser.add_argument('--epochs', type=int,
-                        required=True,
-                        help='number of epochs for training')
-    parser.add_argument('--batch_size', type=int,
-                        required=True,
-                        help='batch size')
-    parser.add_argument('--width', type=int,
-                        default=args.DEFAULTS.width,
-                        help='width to resize images to (default: %(default)s)')
-    parser.add_argument('--height', type=int,
-                        default=args.DEFAULTS.height,
-                        help='width to resize images to (default: %(default)s)')
-    parser.add_argument('--amp', action=BooleanOptionalAction,
-                        help='enable amp support for use on gpus which benefit from it')
-    parser.set_defaults(func=train)
 
 
 def train_one_epoch(model, optimizer, dataset, dataloader, gms_dict: dict, desc=""):
@@ -71,11 +45,11 @@ def train_one_epoch(model, optimizer, dataset, dataloader, gms_dict: dict, desc=
 
         optimizer.zero_grad()
         # global module TODO rename and reorder
-        with torch.autocast(device_type='cuda') if CFG.amp else nullcontext():
+        with torch.autocast(device_type=cfg.MODEL.DEVICE) if cfg.SOLVER.AMP else nullcontext():
             outputs, features = model(triplets)
 
             # need to decide whether to calculate cross entropy loss for whole triplet or just anchor
-            ce_loss = ce_loss_fn(outputs[0:CFG.batch_size], tri_labels[0:CFG.batch_size])
+            ce_loss = ce_loss_fn(outputs[0:batch_size], tri_labels[0:batch_size])
             
             #magic_gcn_work_time_todo(features, tribak)
 
@@ -83,7 +57,7 @@ def train_one_epoch(model, optimizer, dataset, dataloader, gms_dict: dict, desc=
 
             loss = (1.0 * triplet_loss) + (1.0 * ce_loss)
         
-        if CFG.amp:
+        if cfg.SOLVER.AMP:
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
@@ -104,24 +78,23 @@ def magic_gcn_work_time_todo(featuremaps: torch.Tensor, triplets: torch.Tensor):
     fig.add_subplot(2, 3, 1)
     plt.imshow(pmaps[0])
     fig.add_subplot(2, 3, 2)
-    plt.imshow(pmaps[CFG.batch_size])
+    plt.imshow(pmaps[batch_size])
     fig.add_subplot(2, 3, 3)
-    plt.imshow(pmaps[CFG.batch_size*2])
+    plt.imshow(pmaps[batch_size*2])
     fig.add_subplot(2, 3, 4)
     plt.imshow(triplets[0].to(torch.uint8).permute(1, 2, 0))
     fig.add_subplot(2, 3, 5)
-    plt.imshow(triplets[CFG.batch_size].to(torch.uint8).permute(1, 2, 0))
+    plt.imshow(triplets[batch_size].to(torch.uint8).permute(1, 2, 0))
     fig.add_subplot(2, 3, 6)
-    plt.imshow(triplets[CFG.batch_size*2].to(torch.uint8).permute(1, 2, 0))
+    plt.imshow(triplets[batch_size*2].to(torch.uint8).permute(1, 2, 0))
 
 
     plt.show()
 
 
-
 def mine_triplets(dataset, gms_dict: dict, images: torch.Tensor, labels: torch.Tensor, indices: torch.Tensor):
-    triplets = torch.zeros((CFG.batch_size * 3, 3, CFG.height, CFG.width), dtype=torch.float32)
-    tri_labels = torch.zeros((CFG.batch_size * 3), dtype=torch.int64)
+    triplets = torch.zeros((batch_size * 3, 3, cfg.INPUT.HEIGHT, cfg.INPUT.WIDTH), dtype=torch.float32)
+    tri_labels = torch.zeros((batch_size * 3), dtype=torch.int64)
 
     for i, label in enumerate(labels):
         anchor = images[i]
@@ -150,32 +123,29 @@ def mine_triplets(dataset, gms_dict: dict, images: torch.Tensor, labels: torch.T
         negative = dataset.get_by_index(neg_label, neg_idx)
 
         triplets[i] = anchor
-        triplets[i + CFG.batch_size] = positive
-        triplets[i + (CFG.batch_size * 2)] = negative
+        triplets[i + batch_size] = positive
+        triplets[i + (batch_size * 2)] = negative
 
         tri_labels[i] = label
-        tri_labels[i + CFG.batch_size] = label
-        tri_labels[i + (CFG.batch_size * 2)] = int(neg_label)
+        tri_labels[i + batch_size] = label
+        tri_labels[i + (batch_size * 2)] = int(neg_label)
 
     return triplets, tri_labels
 
 
-def train(args: Namespace):
+def train():
     print("Train called")
 
-    global CFG 
-    CFG = args # TODO have a global args
-
-    gms_path = os.path.join(args.gms_path, args.dataset)
+    gms_path = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
     gms_dict = gms.load_data(gms_path)
 
-    dataset, dataloader = load_data(args, "train")
+    dataset, dataloader = load_data("train")
 
     model = cresnet50(dataset.num_classes)
     model = model.to(device)
     optimizer = init_optimizer("sgd", model.parameters())
 
-    for epoch in range(args.epochs):
+    for epoch in range(cfg.SOLVER.EPOCHS):
         train_one_epoch(model, optimizer, dataset, dataloader, gms_dict, desc=f"epoch {epoch+1}")
-        eval_model(model, args)
+        eval_model(model)
 

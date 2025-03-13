@@ -1,5 +1,3 @@
-from argparse import Namespace
-
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -89,11 +87,11 @@ def extract_features(model, dataloader, desc=""):
 
 
 @torch.no_grad()
-def eval_model(model: model.ResNet, args: Namespace):
+def eval_model(model: model.ResNet):
     model.eval()
 
-    _, queryloader = load_data(args, "query")
-    _, galleryloader = load_data(args, "gallery")
+    _, queryloader = load_data("query")
+    _, galleryloader = load_data("gallery")
 
     q_features, q_labels, q_camids = extract_features(model, queryloader, desc="extracting features for query images")
     g_features, g_labels, g_camids = extract_features(model, galleryloader, desc="extracting features for gallery images")

@@ -1,6 +1,3 @@
-def parse_arguments():
-    pass
-
 def main():
     print("TODO")
 
