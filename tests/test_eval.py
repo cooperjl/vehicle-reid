@@ -12,17 +12,10 @@ from vehicle_reid.datasets import VeRi
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class TestEval(unittest.TestCase):
-    def test_eval_model(self):
-        args = Namespace()
+    def setUp(self) -> None:
+        vehicle_reid.configure_logger()
 
-        args.width=224
-        args.height=224
-        args.data_path="data"
-        args.gms_path="gms"
-        args.batch_size = 16
-        
-        args.dataset = "veri"
-        
+    def test_eval_model(self):
         model = vehicle_reid.model.cresnet50(VeRi.num_classes, pretrain=False)
         model = model.to(device)
         

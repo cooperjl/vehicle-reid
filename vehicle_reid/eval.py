@@ -1,9 +1,13 @@
+import logging
+
 import numpy as np
 import torch
 from tqdm import tqdm
 
 from vehicle_reid import model
 from vehicle_reid.datasets import load_data
+
+logger = logging.getLogger(__name__)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -16,7 +20,7 @@ def eval_veri(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
 
     if num_g < max_rank:
         max_rank = num_g
-        print('Note: number of gallery samples is quite small, got {}'.format(num_g))
+        logger.warning(f"Number of gallery samples is quite small, got {num_g}")
 
     indices = np.argsort(distmat, axis=1)
     # compute cmc curve for each query
@@ -24,7 +28,7 @@ def eval_veri(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
     all_AP = []
     num_valid_q = 0.  # number of valid query
 
-    for q_idx in range(num_q):
+    for q_idx in tqdm(range(num_q), desc="computing evaluation metrics", leave=False):
         # get query pid and camid
         q_pid = q_pids[q_idx]
         q_camid = q_camids[q_idx]
@@ -56,7 +60,10 @@ def eval_veri(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
 
-    assert num_valid_q > 0, 'Error: all query identities do not appear in gallery'
+    if not num_valid_q > 0:
+        error = "Not all query identities appear in gallery"
+        logger.error(error)
+        raise AssertionError(error)
 
     all_cmc = np.asarray(all_cmc).astype(np.float32)
     all_cmc = all_cmc.sum(0) / num_valid_q
@@ -71,7 +78,7 @@ def extract_features(model, dataloader, desc=""):
     x_labels = []
     x_camids = []
 
-    for images, labels, _, camids in tqdm(dataloader, desc=desc):
+    for images, labels, _, camids in tqdm(dataloader, desc=desc, leave=False):
         images = images.float().to(device)
         features = model(images)
         features = features.to("cpu")
@@ -104,13 +111,10 @@ def eval_model(model: model.ResNet):
     distmat.addmm_(q_features, g_features.t(), beta=1, alpha=-2)
     distmat = distmat.numpy()
 
-    print("computing evaluation metrics")
-
     cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
 
-    print("results:")
-    print(f"mAP: {mAP:.2f}")
+    logger.info(f"mAP: {mAP:.2f}")
 
     for rank in [1, 5, 10]:
-        print(f"Rank-{rank}: {cmc[rank - 1]:.2f}")
+        logger.info(f"Rank-{rank}: {cmc[rank - 1]:.2f}")
 

@@ -1,6 +1,6 @@
 import os
-from argparse import BooleanOptionalAction, Namespace
 from contextlib import nullcontext
+import logging
 
 import cv2 as cv
 import matplotlib.pyplot as plt
@@ -29,6 +29,7 @@ batch_size = cfg.SOLVER.BATCH_SIZE
 
 scaler = torch.GradScaler()
 
+logger = logging.getLogger(__name__)
 
 def train_one_epoch(model, optimizer, dataset, dataloader, gms_dict: dict, desc=""):
     """
@@ -55,7 +56,7 @@ def train_one_epoch(model, optimizer, dataset, dataloader, gms_dict: dict, desc=
 
             triplet_loss = triplet_loss_fn(features, tri_labels)
 
-            loss = (1.0 * triplet_loss) + (1.0 * ce_loss)
+            loss = (cfg.LOSS.LAMBDA_TRI * triplet_loss) + (cfg.LOSS.LAMBDA_CE * ce_loss)
         
         if cfg.SOLVER.AMP:
             scaler.scale(loss).backward()
@@ -134,7 +135,7 @@ def mine_triplets(dataset, gms_dict: dict, images: torch.Tensor, labels: torch.T
 
 
 def train():
-    print("Train called")
+    logger.info("Entering training loop...")
 
     gms_path = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
     gms_dict = gms.load_data(gms_path)
