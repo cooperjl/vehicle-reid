@@ -9,10 +9,12 @@ from vehicle_reid.datasets import match_dataset
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # TODO have the args be global its stupid passing all this data around
-def load_data(args: Namespace, split: str, batch_size: int = 16):
+def load_data(args: Namespace, split: str):
     dataset = match_dataset(args, split)
+    #mask = list(range(0, len(dataset), 20))
+    #dataset_subsample = torch.utils.data.Subset(dataset, mask)
 
-    # TODO: num workers 
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, 
+                            shuffle=True, num_workers=8, pin_memory=True, drop_last=True)
 
     return dataset, dataloader

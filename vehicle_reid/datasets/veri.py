@@ -12,10 +12,12 @@ class VeRi(VehicleReIdDataset):
     """VeRi Dataset
 
     :param img_dir (str): Root directory of the dataset.
-    :param split (string, optional): The dataset splits, "train" (default), "query", or "gallery" (test)
+    :param split (string, optional): The dataset splits, "train" (default), "query", or "gallery"
     :param transform (callable, optional): optional transform to be applied on a sample.
     :param target_transform (callable, optional): optional transform to be applied on a target.
     """
+
+    num_classes = 776
 
     def __init__(
             self, 
@@ -31,19 +33,25 @@ class VeRi(VehicleReIdDataset):
         self.name = "veri"
         self.name_col = "imageName"
         self.id_col = "vehicleID"
+        self.cid_col = "cameraID"
 
         match split:
             case 'train':
                 self.img_dir = os.path.join(root, 'image_train')
                 img_labels = os.path.join(root, 'train_label.xml')
-            #case 'val':
-            #    self.img_dir = os.path.join(root, 'image_query')
-            #    img_labels = os.path.join(root, 'vric_probe.txt')
+            case 'query':
+                self.img_dir = os.path.join(root, 'image_query')
+                img_labels = os.path.join(root, 'test_label.xml')
             case 'gallery':
                 self.img_dir = os.path.join(root, 'image_test')
                 img_labels = os.path.join(root, 'test_label.xml')
             case _:
                 raise ValueError("split must be train, query, or gallery")
 
-        self.img_labels = pd.read_xml(img_labels, xpath='.//Item', encoding='gb2312', parser="etree").iloc[:, 0:2]
+        self.img_labels = pd.read_xml(img_labels, xpath='.//Item', encoding='gb2312', parser="etree").iloc[:, 0:3]
+
+        # filter train labels down to just queries if split is query
+        if split == 'query':
+            queries = pd.read_csv(os.path.join(root, 'name_query.txt'), header=None).squeeze()
+            self.img_labels = self.img_labels[self.img_labels[self.name_col].isin(queries)].reset_index()
 

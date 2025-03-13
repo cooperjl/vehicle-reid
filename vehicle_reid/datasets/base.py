@@ -41,20 +41,22 @@ class VehicleReIdDataset(Dataset):
         return len(self.img_labels)
 
     def __getitem__(self, idx):
-        img_path = os.path.join(self.img_dir, self.img_labels.iloc[idx, 0])
+        img_path = os.path.join(self.img_dir, self.img_labels.loc[idx, self.name_col])
         image = decode_image(img_path)
-        label = self.img_labels.iloc[idx, 1]
+        label = self.img_labels.loc[idx, self.id_col]
+        cam_id = self.img_labels.loc[idx, self.cid_col]
         if self.image_index is None:
             index = None
-        elif self.img_labels.iloc[idx, 0] not in self.image_index:
+        elif self.img_labels.loc[idx, self.name_col] not in self.image_index:
             index = 0
         else:
-            index = self.image_index[self.img_labels.iloc[idx, 0]][1]
+            index = self.image_index[self.img_labels.loc[idx, self.name_col]][1]
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
             label = self.target_transform(label)
-        return image, label, index
+
+        return image, label, index, cam_id
 
     def get_grouped(self):
         # group by classes
