@@ -21,7 +21,6 @@ class VehicleReIdDataset(Dataset):
         image_index: Optional[str]=None,
         label_index: Optional[str]=None,
         transform: Optional[Callable]=None,
-        target_transform: Optional[Callable]=None,
     ) -> None:
         self.root = root
         self.split = split
@@ -33,9 +32,9 @@ class VehicleReIdDataset(Dataset):
             with open(label_index, 'r') as f:
                 self.label_index = json.load(f)
                 self.max_label = max(self.label_index.keys())
+                self.label_index_keys = [int(k) for k in self.label_index.keys()]
 
         self.transform = transform
-        self.target_transform = target_transform
 
     def __len__(self) -> int:
         return len(self.img_labels)
@@ -45,6 +44,7 @@ class VehicleReIdDataset(Dataset):
         image = decode_image(img_path)
         label = self.img_labels.loc[idx, self.id_col]
         cam_id = self.img_labels.loc[idx, self.cid_col]
+        target = self.label_index_keys.index(label) if label in self.label_index_keys else torch.empty(0)
         if self.image_index is None:
             index = None
         elif self.img_labels.loc[idx, self.name_col] not in self.image_index:
@@ -53,10 +53,8 @@ class VehicleReIdDataset(Dataset):
             index = self.image_index[self.img_labels.loc[idx, self.name_col]][1]
         if self.transform:
             image = self.transform(image)
-        if self.target_transform:
-            label = self.target_transform(label)
 
-        return image, label, index, cam_id
+        return image, label, index, cam_id, target
 
     def get_grouped(self):
         # group by classes
@@ -71,12 +69,7 @@ class VehicleReIdDataset(Dataset):
         label = self.img_labels.sample(axis=0)[1].item()
         return self.img_labels.loc[self.img_labels[1] == label][0].reset_index()
 
-    def get_by_index(self, label: str, index: int) -> torch.Tensor:
+    def get_by_index(self, label: str, index: int) -> int:
         """Get by the label index."""
-        image_name = self.label_index[label][index]
-        img_path = os.path.join(self.img_dir, image_name)
-        image = decode_image(img_path)
-        if self.transform:
-            image = self.transform(image)
-        return image
-
+        return self.label_index[label][index]
+    

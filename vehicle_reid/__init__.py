@@ -1,26 +1,26 @@
-import logging
-import os
-import sys
+import random
+
+import numpy as np
+import torch
 
 from vehicle_reid import args
-from vehicle_reid.config import cfg
+from vehicle_reid.utils import configure_logger
 
-def configure_logger():
-    stream_handler = logging.StreamHandler(sys.stdout)
 
-    handlers = [stream_handler]
 
-    if cfg.MISC.LOG_DIR:
-        file_handler = logging.FileHandler(os.path.join(cfg.MISC.LOG_DIR, "log.txt"), mode="w")
-        handlers.append(file_handler)
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = True
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s %(name)s %(levelname)s: %(message)s",
-        handlers=handlers,
-    )
 
 def main():
     configure_logger()
 
     args.parse_command()
+
+    set_seed(1234)

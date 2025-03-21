@@ -4,7 +4,6 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from vehicle_reid import model
 from vehicle_reid.datasets import load_data
 
 logger = logging.getLogger(__name__)
@@ -78,7 +77,7 @@ def extract_features(model, dataloader, desc=""):
     x_labels = []
     x_camids = []
 
-    for images, labels, _, camids in tqdm(dataloader, desc=desc, leave=False):
+    for images, labels, _, camids, _ in tqdm(dataloader, desc=desc, leave=False):
         images = images.float().to(device)
         features = model(images)
         features = features.to("cpu")
@@ -94,7 +93,7 @@ def extract_features(model, dataloader, desc=""):
 
 
 @torch.no_grad()
-def eval_model(model: model.ResNet):
+def eval_model(model):
     model.eval()
 
     _, queryloader = load_data("query")
@@ -113,8 +112,8 @@ def eval_model(model: model.ResNet):
 
     cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
 
-    logger.info(f"mAP: {mAP:.2f}")
+    logger.info(f"mAP: {mAP:.1%}")
 
     for rank in [1, 5, 10]:
-        logger.info(f"Rank-{rank}: {cmc[rank - 1]:.2f}")
+        logger.info(f"Rank-{rank}: {cmc[rank - 1]:.1%}")
 

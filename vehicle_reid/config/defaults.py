@@ -7,6 +7,7 @@ _C = CN()
 # ---------------------------
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
+_C.MODEL.ARCH = "resnet50"
 _C.MODEL.RPTM_SELECT = "mean"
 
 # ---------------------------
@@ -15,6 +16,7 @@ _C.MODEL.RPTM_SELECT = "mean"
 _C.INPUT = CN()
 _C.INPUT.HEIGHT = 224
 _C.INPUT.WIDTH = 224
+_C.INPUT.FLIP_PROB = 0.5
 _C.INPUT.MEAN = [0.485, 0.456, 0.406]
 _C.INPUT.STD = [0.229, 0.224, 0.225]
 

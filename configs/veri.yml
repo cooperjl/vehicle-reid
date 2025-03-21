@@ -1,21 +1,23 @@
 MODEL:
+  ARCH: "resnet50"
   RPTM_SELECT: "mean"
 
 INPUT:
-  HEIGHT: 224
-  WIDTH: 224
+  HEIGHT: 128
+  WIDTH: 128
+  FLIP_PROB: 0.5
   # TODO: mean and std of specific datasets
 
 DATASET:
   NAME: "veri"
 
 SOLVER:
-  OPTIMIZER: "adam"
+  OPTIMIZER: "sgd"
   EPOCHS: 50
   BASE_LR: 0.005
   WEIGHT_DECAY: 0.0005
   MOMENTUM: 0.9
-  BATCH_SIZE: 8
+  BATCH_SIZE: 20
   AMP: False
 
 LOSS:
@@ -24,7 +26,7 @@ LOSS:
   LAMBDA_TRI: 1.0
 
 TEST:
-  BATCH_SIZE: 24
+  BATCH_SIZE: 48
 
 MISC:
   LOG_DIR: "./logs/veri/"

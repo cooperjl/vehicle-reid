@@ -1,16 +1,18 @@
 import torch.optim as optim
 
+from vehicle_reid.config import cfg
+
 def init_optimizer(
-        optim_str: str,
-        params,
-        lr=0.005, # learning rate
-        weight_decay=5e-4, # weight decay
-        momentum=0.9, # momentum factor for sgd and rmsprop
-        ) -> optim.Optimizer:
-    match optim_str:
+    params,
+) -> optim.Optimizer:
+
+    match cfg.SOLVER.OPTIMIZER:
+        case "adamw":
+            return optim.AdamW(params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
         case "adam":
-            return optim.Adam(params, lr=lr, weight_decay=weight_decay)
+            return optim.Adam(params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
         case "sgd":
-            return optim.SGD(params, lr=lr, momentum=momentum, weight_decay=weight_decay)
+            return optim.SGD(params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY,
+                             momentum=cfg.SOLVER.MOMENTUM, nesterov=True)
         case _:
-            raise ValueError(f"invalid optimizer: {optim_str}")
+            raise ValueError(f"invalid optimizer: {cfg.SOLVER.OPTIMIZER}")

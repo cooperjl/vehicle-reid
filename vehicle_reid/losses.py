@@ -3,18 +3,22 @@ import torch.nn as nn
 
 
 class TripletLoss(nn.Module):
-    def __init__(self, margin=0.3):
+    def __init__(self, margin=1.0):
         super(TripletLoss, self).__init__()
         self.margin = margin
         self.ranking_loss = nn.MarginRankingLoss(margin=margin)
 
     def forward(self, inputs, targets):
+        """
+        Args:
+        - inputs: feature matrix with shape (batch_size, feat_dim)
+        - targets: ground truth labels with shape (num_classes)
+        """
         n = inputs.size(0)
 
         dist = torch.pow(inputs, 2).sum(dim=1, keepdim=True).expand(n, n)
         dist = dist + dist.t()
-        #dist.addmm_(inputs, inputs.t(), beta=1, alpha=-2)
-        torch.addmm(dist, inputs, inputs.t(), beta=1, alpha=-2)
+        dist = torch.addmm(dist, inputs, inputs.t(), beta=1, alpha=-2)
         dist = dist.clamp(min=1e-12).sqrt()
 
         mask = targets.expand(n, n).eq(targets.expand(n, n).t())
@@ -30,3 +34,4 @@ class TripletLoss(nn.Module):
         return loss
 
 CrossEntropyLoss = nn.CrossEntropyLoss
+

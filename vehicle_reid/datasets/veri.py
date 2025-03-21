@@ -26,9 +26,8 @@ class VeRi(VehicleReIdDataset):
             image_index: Optional[str]=None,
             label_index: Optional[str]=None,
             transform: Optional[Callable]=None,
-            target_transform: Optional[Callable]=None
     ) -> None:
-        super().__init__(root, split, image_index, label_index, transform, target_transform)
+        super().__init__(root, split, image_index, label_index, transform)
 
         self.name = "veri"
         self.name_col = "imageName"

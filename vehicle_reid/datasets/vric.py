@@ -8,6 +8,7 @@ import torch
 from .base import VehicleReIdDataset
 
 
+# TODO: update this to work again
 class VRIC(VehicleReIdDataset):
     """VRIC Dataset
 
@@ -23,9 +24,8 @@ class VRIC(VehicleReIdDataset):
             split: str='train',
             index: Optional[str]=None,
             transform: Optional[Callable]=None,
-            target_transform: Optional[Callable]=None
     ) -> None:
-        super().__init__(root, split, index, transform, target_transform)
+        super().__init__(root, split, index, transform)
         
         self.name = "vric"
         self.name_col = 0
@@ -44,6 +44,5 @@ class VRIC(VehicleReIdDataset):
             case _:
                 raise ValueError("split must be train, val, or test")
 
-        # discard the camera information with usecols, as it is not useful for this project
         self.img_labels = pd.read_csv(img_labels, sep=' ', header=None, usecols=[0, 1])
 

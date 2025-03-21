@@ -161,14 +161,19 @@ def main():
     # create the index for the gms values
     image_index = {}
     label_index = {} # guarantee the order matches the rest of script for future loading
+    label_idx = 0
     for label, images in grouped:
         padded_label = pad_label(label, cfg.DATASET.NAME)
         # "label": [<image_name>.jpg, ..., <image_name>.jpg]
-        label_index[padded_label] = [os.path.basename(image) for image in images]
+        #label_index[padded_label] = [os.path.basename(image) for image in images]
+        label_index[padded_label] = []
         # idx is the index of the image in the class adjacency matrix
-        for idx, image in enumerate(images):
-            # "<image_name>.jpg": [label, idx]
-            image_index[os.path.basename(image)] = (padded_label, idx)
+        for image_idx, image in enumerate(images):
+            # "<image_name>.jpg": [label, image_idx]
+            image_index[os.path.basename(image)] = (padded_label, image_idx)
+            # "label": [idx]
+            label_index[padded_label].append(label_idx)
+            label_idx += 1
 
     with open(os.path.join(output, "image_index.json"), 'w') as f:
         json.dump(image_index, f, cls=NumpyEncoder)
