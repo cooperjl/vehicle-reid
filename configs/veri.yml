@@ -6,7 +6,8 @@ INPUT:
   HEIGHT: 128
   WIDTH: 128
   FLIP_PROB: 0.5
-  # TODO: mean and std of specific datasets
+  MEAN: [0.4190, 0.4185, 0.4260]
+  STD: [0.1897, 0.1883, 0.1880]
 
 DATASET:
   NAME: "veri"

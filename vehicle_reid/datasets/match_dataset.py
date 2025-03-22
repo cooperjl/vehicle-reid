@@ -17,14 +17,18 @@ def transform_train():
         transforms.Normalize(mean=cfg.INPUT.MEAN, std=cfg.INPUT.STD),
     ])
 
-def transform_test():
-    return transforms.Compose([
-        transforms.Resize(size=128, antialias=True),
+def transform_test(normalise=True):
+    transform = [
+        transforms.Resize(size=cfg.INPUT.WIDTH, antialias=True),
         transforms.CenterCrop(size=(cfg.INPUT.WIDTH, cfg.INPUT.HEIGHT)),
         transforms.PILToTensor(),
         transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=cfg.INPUT.MEAN, std=cfg.INPUT.STD),
-    ])
+    ]
+    if normalise:
+        transform.append(transforms.Normalize(mean=cfg.INPUT.MEAN, std=cfg.INPUT.STD))
+
+    return transforms.Compose(transform)
+
 
 def match_dataset(split: str):
     path = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
@@ -34,7 +38,16 @@ def match_dataset(split: str):
     image_index = image_index_path if os.path.isfile(image_index_path) else None
     label_index = label_index_path if os.path.isfile(label_index_path) else None
 
-    transform = transform_train() if split == "train" else transform_test()
+    match split:
+        case "train":
+            transform = transform_train()
+        case "test":
+            transform = transform_test()
+        case "normal": # used for calculating normalise values
+            transform = transform_test(normalise=False) # remove normalise from transform and don't augment
+            split = "train" # use train split
+        case _:
+            raise ValueError(f"Invalid split: {split}")
 
     match cfg.DATASET.NAME:
         case "vric":

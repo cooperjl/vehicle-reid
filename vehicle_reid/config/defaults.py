@@ -14,8 +14,8 @@ _C.MODEL.RPTM_SELECT = "mean"
 #           Input
 # ---------------------------
 _C.INPUT = CN()
-_C.INPUT.HEIGHT = 224
-_C.INPUT.WIDTH = 224
+_C.INPUT.HEIGHT = 128
+_C.INPUT.WIDTH = 128
 _C.INPUT.FLIP_PROB = 0.5
 _C.INPUT.MEAN = [0.485, 0.456, 0.406]
 _C.INPUT.STD = [0.229, 0.224, 0.225]
