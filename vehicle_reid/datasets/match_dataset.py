@@ -41,13 +41,11 @@ def match_dataset(split: str):
     match split:
         case "train":
             transform = transform_train()
-        case "test":
-            transform = transform_test()
         case "normal": # used for calculating normalise values
             transform = transform_test(normalise=False) # remove normalise from transform and don't augment
             split = "train" # use train split
         case _:
-            raise ValueError(f"Invalid split: {split}")
+            transform = transform_test()
 
     match cfg.DATASET.NAME:
         case "vric":
