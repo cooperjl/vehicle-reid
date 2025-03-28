@@ -1,6 +1,7 @@
 MODEL:
-  ARCH: "resnet50"
+  ARCH: "convnext-tiny"
   RPTM_SELECT: "mean"
+  TWO_BRANCH: False
 
 INPUT:
   HEIGHT: 128

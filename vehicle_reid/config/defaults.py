@@ -8,6 +8,7 @@ _C = CN()
 _C.MODEL = CN()
 _C.MODEL.DEVICE = "cuda"
 _C.MODEL.ARCH = "resnet50"
+_C.MODEL.TWO_BRANCH = True
 _C.MODEL.RPTM_SELECT = "mean"
 
 # ---------------------------

@@ -5,7 +5,7 @@ import torch
 
 from vehicle_reid.config import cfg
 from vehicle_reid.datasets import load_data
-from vehicle_reid.model import init_model
+from vehicle_reid.model import init_model, Model
 from vehicle_reid.eval import eval_model
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -16,7 +16,7 @@ def main():
 
     dataset, dataloader = load_data("train")
 
-    model = init_model(cfg.MODEL.ARCH, dataset.num_classes)
+    model = init_model(cfg.MODEL.ARCH, dataset.num_classes, in_channels=2048, two_branch=cfg.MODEL.TWO_BRANCH)
     model = model.to(device)
 
     eval_model(model)

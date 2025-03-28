@@ -1,10 +1,12 @@
 import torch
-from torchvision.models.resnet import ResNet, Bottleneck, ResNet50_Weights
+from torchvision.models.resnet import ResNet, Bottleneck, ResNet50_Weights, ResNet101_Weights
 
 
 class FeatureResNet(ResNet):
-    def __init__(self, layers: list[int], num_classes: int):
+    def __init__(self, layers: list[int], num_classes: int, classify: bool=True):
         super().__init__(block=Bottleneck, layers=layers, num_classes=num_classes)
+
+        self.classify = classify
 
     def forward(self, x: torch.Tensor):
         x = self.conv1(x)
@@ -21,7 +23,7 @@ class FeatureResNet(ResNet):
         
         f = torch.flatten(x, 1)
 
-        if not self.training:
+        if not self.training or not self.classify:
             return f
 
         c = self.fc(f)
@@ -29,14 +31,31 @@ class FeatureResNet(ResNet):
         return c, f
 
 
-def resnet50(num_classes: int, pretrain=True):
+def resnet50(num_classes: int, pretrain=True, classify=True):
     model = FeatureResNet(
         layers=[3, 4, 6, 3],
         num_classes=num_classes,
+        classify=classify,
     )
 
     if pretrain:
         pretrain_weights = ResNet50_Weights.DEFAULT.get_state_dict()
+        model_dict = model.state_dict()
+        pretrain_dict = {k: v for k, v in pretrain_weights.items() if k in model_dict and model_dict[k].size() == v.size()}
+        model_dict.update(pretrain_dict)
+        model.load_state_dict(model_dict)
+
+    return model
+
+def resnet101(num_classes: int, pretrain=True, classify=True):
+    model = FeatureResNet(
+        layers=[3, 4, 23, 3],
+        num_classes=num_classes,
+        classify=classify
+    )
+
+    if pretrain:
+        pretrain_weights = ResNet101_Weights.DEFAULT.get_state_dict()
         model_dict = model.state_dict()
         pretrain_dict = {k: v for k, v in pretrain_weights.items() if k in model_dict and model_dict[k].size() == v.size()}
         model_dict.update(pretrain_dict)

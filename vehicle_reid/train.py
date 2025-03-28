@@ -8,13 +8,14 @@ import numpy as np
 import numpy.ma as ma
 import torch
 import torch.nn as nn
+from torchvision.transforms import v2 as transforms
 from tqdm import tqdm
 
 from vehicle_reid import gms, losses, utils
 from vehicle_reid.config import cfg
 from vehicle_reid.datasets import load_data
 from vehicle_reid.eval import eval_model
-from vehicle_reid.model import init_model
+from vehicle_reid.model import Model, init_model
 from vehicle_reid.optimizer import init_optimizer
 from vehicle_reid.utils import AverageMeter
 
@@ -77,6 +78,15 @@ def train_one_epoch(
 
         if batch_idx % 100 == 0:
             logger.info(f"Loss: {losses.val:.4f} ({losses.avg:.4f})") # TODO: log epoch info as well
+
+
+#def split_images(images: torch.Tensor):
+        #five_crop = transforms.FiveCrop(size=(int(cfg.INPUT.WIDTH / 3), int(cfg.INPUT.HEIGHT / 3)))
+        #return [five_crop(image) for image in images]
+        #for image in images:
+        #    five_crop(image)
+        #return five_crop(images)
+
 
 
 def magic_gcn_work_time_todo(featuremaps: torch.Tensor, triplets: torch.Tensor):
@@ -166,8 +176,10 @@ def train():
 
     dataset, dataloader = load_data("train") # TODO: integrate gms_dict into load_data
 
-    model = init_model(cfg.MODEL.ARCH, 576)
+    model = init_model(cfg.MODEL.ARCH, num_classes=576, in_channels=2048, two_branch=cfg.MODEL.TWO_BRANCH)
     model = model.to(device)
+
+
     optimizer = init_optimizer(model.parameters())
 
 
