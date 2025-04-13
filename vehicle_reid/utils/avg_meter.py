@@ -1,5 +1,6 @@
 class AverageMeter(object):
-    """Computes and stores the average and current value
+    """
+    Computes and stores the average and current value.
 
     Credit: https://github.com/pytorch/examples/blob/5dfeb46902baf444010f2f54bcf4dfbea109ae4d/imagenet/main.py#L423-L441
     """

@@ -8,12 +8,126 @@ from vehicle_reid.datasets import load_data
 
 logger = logging.getLogger(__name__)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+@torch.no_grad()
+def eval_model(model):
+    """
+    Main evaluation function, to evaluate a model using the parameters in the specified configuration file,
+    such as the dataset.
+
+    Parameters
+    ----------
+    model : nn.Module
+        Model to extract the features, expects forward to return a single tensor in evaluation mode.
+    """
+    cmc, mAP = compute_metrics(model)
+
+    logger.info(f"mAP: {mAP:.1%}")
+
+    for rank in [1, 5, 10]:
+        logger.info(f"Rank-{rank}: {cmc[rank - 1]:.1%}")
+
 
 @torch.no_grad()
-def eval_veri(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
-    """Evaluation with veri metric
-    Key: for each query identity, its gallery images from the same camera view are discarded.
+def compute_metrics(model):
+    """
+    Function which computes the metrics using the parameters in the specified configuration file, such as the dataset.
+
+    Parameters
+    ----------
+    model : nn.Module
+        Model to extract the features, expects forward to return a single tensor in evaluation mode.
+
+    Returns
+    -------
+    cmc : np.ndarray
+        1d array of length 10, containing rank 1-10 cmc results.
+    mAP : np.float32
+        mean average precision.
+    """
+    model.eval()
+
+    _, queryloader = load_data("query")
+    _, galleryloader = load_data("gallery")
+
+    q_features, q_labels, q_camids = extract_features(model, queryloader, desc="extracting features for query images")
+    g_features, g_labels, g_camids = extract_features(model, galleryloader, desc="extracting features for gallery images")
+
+    qn, gn = q_features.size(0), g_features.size(0)
+
+    distmat = torch.pow(q_features, 2).sum(dim=1, keepdim=True).expand(qn, gn) + \
+              torch.pow(g_features, 2).sum(dim=1, keepdim=True).expand(gn, qn).t()
+
+    distmat.addmm_(q_features, g_features.t(), beta=1, alpha=-2)
+    distmat = distmat.numpy()
+
+    cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
+
+    return cmc, mAP
+
+
+@torch.no_grad()
+def extract_features(model, dataloader, desc=""):
+    """
+    Function which extracts the features over the dataset using the dataloader.
+
+    Parameters
+    ----------
+    model : nn.Module
+        Model to extract the features, expects forward to return a single tensor in evaluation mode.
+    dataloader : DataLoader
+        dataloader of the dataset to evaluate performance using.
+    desc : str, optional
+        Optional description label for tqdm progress bar.
+
+    """
+    x_features = []
+    x_labels = []
+    x_camids = []
+
+    for images, labels, _, camids, _ in tqdm(dataloader, desc=desc, leave=False):
+        images = images.float().to(model.device)
+        features = model(images)
+        if model.device != "cpu":
+            features = features.to(torch.device("cpu"))
+
+        x_features.append(features)
+        x_labels.extend(labels)
+        x_camids.extend(camids)
+
+    x_features = torch.cat(x_features, 0)
+    x_labels = np.asarray(x_labels)
+    x_camids = np.asarray(x_camids)
+
+    return x_features, x_labels, x_camids
+
+
+@torch.no_grad()
+def eval_veri(distmat: np.ndarray, q_pids: np.ndarray, g_pids: np.ndarray, q_camids: np.ndarray, g_camids: np.ndarray, max_rank: int=10):
+    """
+    Evaluation with veri metric: for each query identity, its gallery images from the same camera view are discarded.
+    Credit: https://github.com/KaiyangZhou/deep-person-reid/blob/566a56a2cb255f59ba75aa817032621784df546a/torchreid/metrics/rank.py#L94
+
+    Parameters
+    ----------
+    distmat : np.ndarray
+        distance matrix of shape (num_query, num_gallery).
+    q_pids : np.ndarray
+        1d array containing identities of each query instance.
+    g_pids : np.ndarray
+        1d array containing identities of each gallery instance.
+    q_camids : np.ndarray
+        1d array containing camera ids under which each query instance is captured.
+    g_camids : np.ndarray
+        1d array containing camera ids under which each gallery instance is captured.
+    max_rank : int, optional
+        maximum CMC rank to be computed (default is 10).
+
+    Returns
+    -------
+    all_cmc : np.ndarray
+        1d array of length max_rank, containing rank 1-max_rank cmc results.
+    mAP : np.float32
+        mean average precision.
     """
     num_q, num_g = distmat.shape
 
@@ -70,50 +184,4 @@ def eval_veri(distmat, q_pids, g_pids, q_camids, g_camids, max_rank):
     mAP = np.mean(all_AP)
 
     return all_cmc, mAP
-
-@torch.no_grad()
-def extract_features(model, dataloader, desc=""):
-    x_features = []
-    x_labels = []
-    x_camids = []
-
-    for images, labels, _, camids, _ in tqdm(dataloader, desc=desc, leave=False):
-        images = images.float().to(device)
-        features = model(images)
-        features = features.to("cpu")
-        x_features.append(features)
-        x_labels.extend(labels)
-        x_camids.extend(camids)
-
-    x_features = torch.cat(x_features, 0)
-    x_labels = np.asarray(x_labels)
-    x_camids = np.asarray(x_camids)
-
-    return x_features, x_labels, x_camids
-
-
-@torch.no_grad()
-def eval_model(model):
-    model.eval()
-
-    _, queryloader = load_data("query")
-    _, galleryloader = load_data("gallery")
-
-    q_features, q_labels, q_camids = extract_features(model, queryloader, desc="extracting features for query images")
-    g_features, g_labels, g_camids = extract_features(model, galleryloader, desc="extracting features for gallery images")
-
-    qn, gn = q_features.size(0), g_features.size(0)
-
-    distmat = torch.pow(q_features, 2).sum(dim=1, keepdim=True).expand(qn, gn) + \
-              torch.pow(g_features, 2).sum(dim=1, keepdim=True).expand(gn, qn).t()
-
-    distmat.addmm_(q_features, g_features.t(), beta=1, alpha=-2)
-    distmat = distmat.numpy()
-
-    cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
-
-    logger.info(f"mAP: {mAP:.1%}")
-
-    for rank in [1, 5, 10]:
-        logger.info(f"Rank-{rank}: {cmc[rank - 1]:.1%}")
 

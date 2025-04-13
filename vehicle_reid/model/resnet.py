@@ -1,12 +1,25 @@
 import torch
-from torchvision.models.resnet import ResNet, Bottleneck, ResNet50_Weights, ResNet101_Weights
+from torchvision.models.resnet import (
+    Bottleneck,
+    ResNet,
+    ResNet50_Weights,
+    ResNet101_Weights,
+)
+
+from vehicle_reid.utils import load_weights
 
 
 class FeatureResNet(ResNet):
-    def __init__(self, layers: list[int], num_classes: int, classify: bool=True):
+    def __init__(self, layers: list[int], num_classes: int, classify: bool=True, pool: bool=True, device: str="cpu"):
         super().__init__(block=Bottleneck, layers=layers, num_classes=num_classes)
 
         self.classify = classify
+        self.pool = pool
+        self.device = device
+
+    def pool_and_flatten(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.avgpool(x)
+        return torch.flatten(x, 1)
 
     def forward(self, x: torch.Tensor):
         x = self.conv1(x)
@@ -18,48 +31,44 @@ class FeatureResNet(ResNet):
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        
-        x = self.avgpool(x)
-        
-        f = torch.flatten(x, 1)
 
-        if not self.training or not self.classify:
+        local_f = x
+        
+        global_f = self.pool_and_flatten(x)
+
+        f = global_f if self.pool else local_f
+
+        if self.training and self.classify:
+            c = self.fc(global_f)
+            return c, f
+        else:
             return f
 
-        c = self.fc(f)
-
-        return c, f
-
-
-def resnet50(num_classes: int, pretrain=True, classify=True):
+def resnet50(num_classes: int, pretrain: bool=True, classify: bool=True, pool: bool=True, device: str="cpu") -> FeatureResNet:
     model = FeatureResNet(
         layers=[3, 4, 6, 3],
         num_classes=num_classes,
         classify=classify,
+        pool=pool,
+        device=device,
     )
 
     if pretrain:
-        pretrain_weights = ResNet50_Weights.DEFAULT.get_state_dict()
-        model_dict = model.state_dict()
-        pretrain_dict = {k: v for k, v in pretrain_weights.items() if k in model_dict and model_dict[k].size() == v.size()}
-        model_dict.update(pretrain_dict)
-        model.load_state_dict(model_dict)
+        load_weights(model=model, weights=ResNet50_Weights.DEFAULT.get_state_dict())
 
     return model
 
-def resnet101(num_classes: int, pretrain=True, classify=True):
+def resnet101(num_classes: int, pretrain=True, classify=True, pool: bool=True, device: str="cpu") -> FeatureResNet:
     model = FeatureResNet(
         layers=[3, 4, 23, 3],
         num_classes=num_classes,
-        classify=classify
+        classify=classify,
+        pool=pool,
+        device=device,
     )
 
     if pretrain:
-        pretrain_weights = ResNet101_Weights.DEFAULT.get_state_dict()
-        model_dict = model.state_dict()
-        pretrain_dict = {k: v for k, v in pretrain_weights.items() if k in model_dict and model_dict[k].size() == v.size()}
-        model_dict.update(pretrain_dict)
-        model.load_state_dict(model_dict)
+        load_weights(model=model, weights=ResNet101_Weights.DEFAULT.get_state_dict())
 
     return model
 

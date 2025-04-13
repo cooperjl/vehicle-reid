@@ -2,26 +2,42 @@ import json
 import os
 from typing import Callable, Optional
 
-import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
 from torchvision.io import decode_image
 
 
 class VehicleReIdDataset(Dataset):
-    """Vehicle ReId dataset base class.
+    """
+    Vehicle re-identification dataset base class.
 
-    Need to define self.img_dir and self.img_labels in init function when used, as seen in classes in this file.
+    Need to define self.img_dir and self.img_labels in init function when used, as seen in classes in this module.
     """
 
     def __init__(
         self, 
         root: str,
-        split: str='train',
+        split: str="train",
         image_index: Optional[str]=None,
         label_index: Optional[str]=None,
         transform: Optional[Callable]=None,
     ) -> None:
+        """
+        Parameters
+        ----------
+        root : str
+            root directory containing the datasets.
+        split : str, optional
+            which split of the dataset to use. Default value is "train".
+        image_index : str, optional
+            path to the image index file generated at the same time as the gms data. Optional, since to generate these files
+            that script needs to access the dataset.
+        label_index : str, optional
+            path to the label index file generated at the same time as the gms data. Optional, since to generate these files
+            that script needs to access the dataset.
+        transform : callable, optional
+            transform to apply to the images.
+        """
         self.root = root
         self.split = split
         
@@ -57,7 +73,7 @@ class VehicleReIdDataset(Dataset):
         return image, label, index, cam_id, target
 
     def get_grouped(self):
-        # group by classes
+        """Used to get the dataset grouped by classes, used for the gms script."""
         img_path_with_labels = self.img_labels.copy()
         img_path_with_labels.iloc[:, 0] = self.img_dir + os.sep + img_path_with_labels.iloc[:, 0]
 
@@ -66,6 +82,8 @@ class VehicleReIdDataset(Dataset):
         return grouped
 
     def get_random_label(self):
+        """Get a random label, used for purposes such as visualisation."""
+        # TODO: consider the difference between this and the version in train.py
         label = self.img_labels.sample(axis=0)[1].item()
         return self.img_labels.loc[self.img_labels[1] == label][0].reset_index()
 

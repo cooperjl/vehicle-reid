@@ -1,7 +1,7 @@
 [project]
 name = "vehicle-reid"
 version = "0.1.0"
-description = "Vehicle reidentification dissertation project"
+description = "Vehicle Re-Identification with Deep Learning"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -18,7 +18,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "basedpyright>=1.24.0",
+    "pyright>=1.1.399",
 ]
 
 [project.scripts]

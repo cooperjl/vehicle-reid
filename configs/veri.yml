@@ -1,12 +1,13 @@
 MODEL:
-  ARCH: "convnext-tiny"
-  RPTM_SELECT: "mean"
-  TWO_BRANCH: False
+  ARCH: "resnet50"
+  TWO_BRANCH: True
 
 INPUT:
   HEIGHT: 128
   WIDTH: 128
+  AUGMENT: True
   FLIP_PROB: 0.5
+  RAND_ERASE: True
   MEAN: [0.4190, 0.4185, 0.4260]
   STD: [0.1897, 0.1883, 0.1880]
 
@@ -14,12 +15,12 @@ DATASET:
   NAME: "veri"
 
 SOLVER:
-  OPTIMIZER: "sgd"
+  OPTIMIZER: "adamw"
   EPOCHS: 50
   BASE_LR: 0.005
   WEIGHT_DECAY: 0.0005
   MOMENTUM: 0.9
-  BATCH_SIZE: 20
+  BATCH_SIZE: 16
   AMP: False
 
 LOSS:

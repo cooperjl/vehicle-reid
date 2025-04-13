@@ -11,7 +11,7 @@ def calculate_normal_values():
     running_mean = 0
     running_std = 0
 
-    for images, _, _, _, _ in tqdm(dataloader):
+    for images, *_ in tqdm(dataloader):
         # reshape the tensor from (batch_size, 3, 128, 128) to (batch_size, 3, 128*128)
         images = images.view(images.size(0), images.size(1), -1)
 

@@ -1,18 +1,29 @@
 import torch
 import torch.nn as nn
 
+# For consistent importing
+CrossEntropyLoss = nn.CrossEntropyLoss
 
 class TripletLoss(nn.Module):
-    def __init__(self, margin=1.0):
-        super(TripletLoss, self).__init__()
+    def __init__(self, margin: float=1.0):
+        super().__init__()
         self.margin = margin
         self.ranking_loss = nn.MarginRankingLoss(margin=margin)
 
-    def forward(self, inputs, targets):
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
-        Args:
-        - inputs: feature matrix with shape (batch_size, feat_dim)
-        - targets: ground truth labels with shape (num_classes)
+
+        Parameters
+        ----------
+        inputs : torch.Tensor
+            feature matrix with shape (batch_size, feat_dim).
+        targets : torch.Tensor
+            target labels with shape (num_classes).
+
+        Returns
+        -------
+        loss : torch.Tensor
+            triplet loss for use in training.
         """
         n = inputs.size(0)
 
@@ -32,6 +43,4 @@ class TripletLoss(nn.Module):
         y = torch.ones_like(dist_an)
         loss = self.ranking_loss(dist_an, dist_ap, y)
         return loss
-
-CrossEntropyLoss = nn.CrossEntropyLoss
 

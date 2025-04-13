@@ -1,5 +1,13 @@
 import torch
-from torchvision.models.convnext import ConvNeXt, CNBlockConfig, ConvNeXt_Tiny_Weights
+from torchvision.models.convnext import (
+    CNBlockConfig,
+    ConvNeXt,
+    ConvNeXt_Tiny_Weights,
+    ConvNeXt_Small_Weights,
+)
+
+from vehicle_reid.utils import load_weights
+
 
 class FeatureConvNeXt(ConvNeXt):
     def __init__(
@@ -8,27 +16,34 @@ class FeatureConvNeXt(ConvNeXt):
         stochastic_depth_prob: float,
         num_classes: int,
         classify: bool=True,
+        pool: bool=True,
+        device: str="cpu",
     ) -> None:
         super().__init__(block_setting, stochastic_depth_prob=stochastic_depth_prob, num_classes=num_classes)
 
         self.classify = classify
+        self.pool = pool
+        self.device = device
+
+    def pool_and_flatten(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.avgpool(x)
+        return torch.flatten(x, 1)
 
     def forward(self, x: torch.Tensor):
         x = self.features(x)
-        x = self.avgpool(x)
 
-        f = torch.flatten(x, 1)
+        local_f = x
+        global_f = self.avgpool(x) # flatten included in classifier, so don't flatten
 
-        if not self.training or not self.classify:
+        f = global_f if self.pool else local_f
+
+        if self.training and self.classify:
+            c = self.classifier(global_f)
+            return c, f
+        else:
             return f
 
-        # flatten included in classifier, so use x not f
-        c = self.classifier(x)
-
-        return c, f
-
-
-def convnext_tiny(num_classes: int, pretrain: bool=True, classify: bool=True) -> FeatureConvNeXt:
+def convnext_tiny(num_classes: int, pretrain: bool=True, classify: bool=True, pool: bool=True, device: str="cpu") -> FeatureConvNeXt:
     block_setting = [
         CNBlockConfig(96, 192, 3),
         CNBlockConfig(192, 384, 3),
@@ -40,19 +55,17 @@ def convnext_tiny(num_classes: int, pretrain: bool=True, classify: bool=True) ->
         block_setting=block_setting,
         stochastic_depth_prob=0.1,
         num_classes=num_classes,
-        classify=classify
+        classify=classify,
+        pool=pool,
+        device=device,
     )
 
     if pretrain:
-        pretrain_weights = ConvNeXt_Tiny_Weights.DEFAULT.get_state_dict()
-        model_dict = model.state_dict()
-        pretrain_dict = {k: v for k, v in pretrain_weights.items() if k in model_dict and model_dict[k].size() == v.size()}
-        model_dict.update(pretrain_dict)
-        model.load_state_dict(model_dict)
+        load_weights(model=model, weights=ConvNeXt_Tiny_Weights.DEFAULT.get_state_dict())
 
     return model
 
-def convnext_small(num_classes: int, pretrain: bool=True, classify: bool=True) -> FeatureConvNeXt:
+def convnext_small(num_classes: int, pretrain: bool=True, classify: bool=True, pool: bool=True, device: str="cpu") -> FeatureConvNeXt:
     block_setting = [
         CNBlockConfig(96, 192, 3),
         CNBlockConfig(192, 384, 3),
@@ -64,15 +77,13 @@ def convnext_small(num_classes: int, pretrain: bool=True, classify: bool=True) -
         block_setting=block_setting,
         stochastic_depth_prob=0.1,
         num_classes=num_classes,
-        classify=classify
+        classify=classify,
+        pool=pool,
+        device=device,
     )
 
     if pretrain:
-        pretrain_weights = ConvNeXt_Tiny_Weights.DEFAULT.get_state_dict()
-        model_dict = model.state_dict()
-        pretrain_dict = {k: v for k, v in pretrain_weights.items() if k in model_dict and model_dict[k].size() == v.size()}
-        model_dict.update(pretrain_dict)
-        model.load_state_dict(model_dict)
+        load_weights(model=model, weights=ConvNeXt_Small_Weights.DEFAULT.get_state_dict())
 
     return model
 
