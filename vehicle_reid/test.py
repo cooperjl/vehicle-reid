@@ -21,7 +21,7 @@ def main():
     dataset = match_dataset("query")
 
     # num_classes not needed as classifier not used, but train classes is used to make compatibility with checkpoints easier
-    model = init_model(cfg.MODEL.ARCH, in_channels=2048, num_classes=dataset.train_classes, two_branch=cfg.MODEL.TWO_BRANCH, device=device)
+    model = init_model(cfg.MODEL.ARCH, num_classes=dataset.train_classes, two_branch=cfg.MODEL.TWO_BRANCH, device=device)
     model = model.to(device)
 
     if cfg.MODEL.CHECKPOINT:

@@ -42,7 +42,7 @@ def configure_logger(log_dir: str=None, config_name: str=None):
         handlers.append(file_handler)
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s %(name)s %(levelname)s: %(message)s",
         handlers=handlers,
     )

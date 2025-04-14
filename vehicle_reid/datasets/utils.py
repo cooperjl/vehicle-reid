@@ -7,7 +7,7 @@ from vehicle_reid.datasets import VRIC, VeRi
 from vehicle_reid.datasets.transforms import transform_test, transform_train
 
 
-def load_data(split: str):
+def load_data(split: str, normalise: bool=True):
     """
     Loads the dataset and the dataloader.
 
@@ -23,16 +23,21 @@ def load_data(split: str):
     dataloader : DataLoader
         The dataloader which loads the dataset.
     """
-    batch_size = cfg.SOLVER.BATCH_SIZE if split == "train" else cfg.TEST.BATCH_SIZE
+    if split == "train":
+        batch_size = cfg.SOLVER.BATCH_SIZE
+        shuffle = True
+    else:
+        batch_size = cfg.TEST.BATCH_SIZE
+        shuffle = False
     
-    dataset = match_dataset(split)
+    dataset = match_dataset(split, normalise)
 
     dataloader = DataLoader(dataset, batch_size=batch_size, 
-                            shuffle=True, num_workers=8, pin_memory=True, drop_last=True)
+                            shuffle=shuffle, num_workers=8, pin_memory=True, drop_last=True)
 
     return dataset, dataloader
 
-def match_dataset(split: str):
+def match_dataset(split: str, normalise: bool=True):
     """
     Matches the dataset split and name from the configuration file, and creates the dataset objects.
 
@@ -60,7 +65,7 @@ def match_dataset(split: str):
             transform = transform_test(normalise=False) # remove normalise from transform and don't augment
             split = "train" # use train split
         case _:
-            transform = transform_test()
+            transform = transform_test(normalise=normalise)
 
     match cfg.DATASET.NAME:
         case "vric":

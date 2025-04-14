@@ -5,7 +5,7 @@ import os
 from vehicle_reid import gms, test, train
 from vehicle_reid.config import cfg
 from vehicle_reid.datasets import visualise
-from vehicle_reid.utils import configure_logger, normal_values
+from vehicle_reid.utils import configure_logger, normal_values, set_seed
 
 COMMANDS = {
     "gms": gms.main,
@@ -47,6 +47,8 @@ def parse_command():
 
     cfg.merge_from_list(args.config)
     cfg.freeze()
+
+    set_seed()
 
     # execute the command obtained from the dict
     COMMANDS[args.command]()

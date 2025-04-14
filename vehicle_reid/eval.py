@@ -19,7 +19,11 @@ def eval_model(model):
     model : nn.Module
         Model to extract the features, expects forward to return a single tensor in evaluation mode.
     """
-    cmc, mAP = compute_metrics(model)
+    _, queryloader = load_data("query")
+    _, galleryloader = load_data("gallery")
+
+    distmat, q_labels, g_labels, q_camids, g_camids = calculate_distmat(model, queryloader, galleryloader)
+    cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
 
     logger.info(f"mAP: {mAP:.1%}")
 
@@ -28,26 +32,34 @@ def eval_model(model):
 
 
 @torch.no_grad()
-def compute_metrics(model):
+def calculate_distmat(model, queryloader, galleryloader):
     """
-    Function which computes the metrics using the parameters in the specified configuration file, such as the dataset.
+    Function which calculates the distmat using the parameters in the specified configuration file, such as the dataset.
+    It also returns important parameters for the evaluation of the model, such as labels and camera ids.
 
     Parameters
     ----------
     model : nn.Module
         Model to extract the features, expects forward to return a single tensor in evaluation mode.
+    queryloader : DataLoader
+        Dataloader for the query set.
+    galleryloader : DataLoader
+        Dataloader for the gallery set.
 
     Returns
     -------
-    cmc : np.ndarray
-        1d array of length 10, containing rank 1-10 cmc results.
-    mAP : np.float32
-        mean average precision.
+    distmat : np.ndarray
+        distance matrix of shape (num_query, num_gallery).
+    q_labels : np.ndarray
+        1d array containing identities of each query instance.
+    g_labels : np.ndarray
+        1d array containing identities of each gallery instance.
+    q_camids : np.ndarray
+        1d array containing camera ids under which each query instance is captured.
+    g_camids : np.ndarray
+        1d array containing camera ids under which each gallery instance is captured.
     """
     model.eval()
-
-    _, queryloader = load_data("query")
-    _, galleryloader = load_data("gallery")
 
     q_features, q_labels, q_camids = extract_features(model, queryloader, desc="extracting features for query images")
     g_features, g_labels, g_camids = extract_features(model, galleryloader, desc="extracting features for gallery images")
@@ -60,13 +72,11 @@ def compute_metrics(model):
     distmat.addmm_(q_features, g_features.t(), beta=1, alpha=-2)
     distmat = distmat.numpy()
 
-    cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
-
-    return cmc, mAP
+    return distmat, q_labels, g_labels, q_camids, g_camids
 
 
 @torch.no_grad()
-def extract_features(model, dataloader, desc=""):
+def extract_features(model, dataloader, desc: str=""):
     """
     Function which extracts the features over the dataset using the dataloader.
 
@@ -78,7 +88,6 @@ def extract_features(model, dataloader, desc=""):
         dataloader of the dataset to evaluate performance using.
     desc : str, optional
         Optional description label for tqdm progress bar.
-
     """
     x_features = []
     x_labels = []

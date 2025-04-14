@@ -76,4 +76,5 @@ _C.MISC.GMS_PATH = "gms"
 _C.MISC.LOG_DIR = None
 _C.MISC.SAVE_DIR = "checkpoints"
 _C.MISC.SAVE_FREQ = 10
+_C.MISC.SEED = None
 
