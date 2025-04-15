@@ -10,16 +10,8 @@ from vehicle_reid.utils import load_weights
 
 
 class FeatureConvNeXt(ConvNeXt):
-    def __init__(
-        self,
-        block_setting: list[CNBlockConfig],
-        stochastic_depth_prob: float,
-        num_classes: int,
-        classify: bool=True,
-        pool: bool=True,
-        device: str="cpu",
-    ) -> None:
-        super().__init__(block_setting, stochastic_depth_prob=stochastic_depth_prob, num_classes=num_classes)
+    def __init__(self, classify: bool=True, pool: bool=True, device: str="cpu", **kwargs):
+        super().__init__(**{k: v for k, v in kwargs.items() if v is not None})
 
         self.classify = classify
         self.pool = pool

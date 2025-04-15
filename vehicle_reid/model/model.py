@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 from torchvision.transforms import v2 as transforms
 
-from vehicle_reid.model import GraphModule
+from .graph import GraphModule
 
 
 class Model(nn.Module):
-    def __init__(self, model: nn.Module, in_channels: int, num_classes: int, device: str, pretrain: bool=True) -> None:
+    def __init__(self, model: nn.Module, in_channels: int, num_classes: int, device: str="cpu", pretrain: bool=True) -> None:
         super().__init__()
         
         self.device = device

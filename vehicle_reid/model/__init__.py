@@ -1,7 +1,6 @@
 from .resnet import resnet50, resnet101
 from .convnext import convnext_tiny, convnext_small
-from .graph import GraphModule
-from .siamese import Model
+from .model import Model
 
 models = {
     'resnet50': {'model': resnet50, 'features': 2048},
@@ -10,7 +9,7 @@ models = {
     'convnext-small': {'model': convnext_small, 'features': 768},
 }
 
-def init_model(name: str, num_classes: int, two_branch: bool=True, pretrain: bool=True, device: str="cpu"):
+def init_model(name: str, num_classes: int=None, two_branch: bool=True, pretrain: bool=True, device: str="cpu"):
     """
     Initialises the model, depending on configuration options.
 
@@ -18,8 +17,9 @@ def init_model(name: str, num_classes: int, two_branch: bool=True, pretrain: boo
     ----------
     name : str
         The name of the architecture for the feature extraction model. Valid options visable in models dict keys in this file.
-    num_classes : int
-        The number of training classes for the classifier in training with cross entropy loss.
+    num_classes : int, optional
+        The number of training classes for the classifier in training with cross entropy loss. The default value is None, for
+        use outside of training.
     two_branch : bool, optional
         Whether to use the two-branch graph-based model. The default value is True.
     pretrain : bool, optional

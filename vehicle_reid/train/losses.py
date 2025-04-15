@@ -5,6 +5,9 @@ import torch.nn as nn
 CrossEntropyLoss = nn.CrossEntropyLoss
 
 class TripletLoss(nn.Module):
+    """
+    Triplet loss class, for computing the triplet loss between samples.
+    """
     def __init__(self, margin: float=1.0):
         super().__init__()
         self.margin = margin
@@ -12,7 +15,6 @@ class TripletLoss(nn.Module):
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
-
         Parameters
         ----------
         inputs : torch.Tensor

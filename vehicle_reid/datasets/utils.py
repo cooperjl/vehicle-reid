@@ -4,7 +4,8 @@ from torch.utils.data import DataLoader
 
 from vehicle_reid.config import cfg
 from vehicle_reid.datasets import VRIC, VeRi
-from vehicle_reid.datasets.transforms import transform_test, transform_train
+
+from .transforms import transform_test, transform_train
 
 
 def load_data(split: str, normalise: bool=True):

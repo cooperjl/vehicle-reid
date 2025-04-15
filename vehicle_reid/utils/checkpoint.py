@@ -36,9 +36,9 @@ def load_checkpoint(path: str, model: torch.nn.Module, optimizer=None):
     Parameters
     ----------
     path : str
-        path to the file to be loaded.
+        Path to the file to be loaded.
     model : torch.nn.Module
-        model to load the state of.
+        Model to load the state of.
     optimizer : optim.Optimizer, optional
         Optimizer to load the state of, used only if resuming training.
 
@@ -48,7 +48,7 @@ def load_checkpoint(path: str, model: torch.nn.Module, optimizer=None):
         The epoch to resume training from, if used for resuming training.
     """
     checkpoint = torch.load(path, weights_only=True)
-    model.load_state_dict(checkpoint['model_state_dict'])
+    load_weights(model, checkpoint['model_state_dict'])
 
     if optimizer:
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -62,12 +62,12 @@ def load_weights(model: torch.nn.Module, weights: dict):
     Parameters
     ----------
     model : torch.nn.Module
-        model to load the state of.
+        Model to load the state of.
     weights : dict
-        state dict of weights to load.
+        State dict of weights to load.
     """
     model_dict = model.state_dict()
-    pretrain_dict = {k: v for k, v in weights.items() if k in model_dict and model_dict[k].size() == v.size()}
-    model_dict.update(pretrain_dict)
+    update_dict = {k: v for k, v in weights.items() if k in model_dict and model_dict[k].size() == v.size()}
+    model_dict.update(update_dict)
     model.load_state_dict(model_dict)
 

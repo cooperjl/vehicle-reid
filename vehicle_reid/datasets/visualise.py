@@ -79,7 +79,7 @@ def visualise_dataset():
     queryset, queryloader = load_data("query", normalise=False)
     galleryset, galleryloader = load_data("gallery", normalise=False)
 
-    model = init_model(cfg.MODEL.ARCH, num_classes=queryset.train_classes, two_branch=cfg.MODEL.TWO_BRANCH, device=device)
+    model = init_model(cfg.MODEL.ARCH, two_branch=cfg.MODEL.TWO_BRANCH, device=device)
     model = model.to(device)
     model.eval()
 

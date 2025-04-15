@@ -81,12 +81,6 @@ class VehicleReIdDataset(Dataset):
 
         return grouped
 
-    def get_random_label(self):
-        """Get a random label, used for purposes such as visualisation."""
-        # TODO: consider the difference between this and the version in train.py
-        label = self.img_labels.sample(axis=0)[1].item()
-        return self.img_labels.loc[self.img_labels[1] == label][0].reset_index()
-
     def get_by_index(self, label: str, index: int) -> int:
         """Get by the label index."""
         return self.label_index[label][index]

@@ -10,9 +10,8 @@ from vehicle_reid.utils import load_weights
 
 
 class FeatureResNet(ResNet):
-    def __init__(self, layers: list[int], num_classes: int, classify: bool=True, pool: bool=True, device: str="cpu"):
-        super().__init__(block=Bottleneck, layers=layers, num_classes=num_classes)
-
+    def __init__(self, classify: bool=True, pool: bool=True, device: str="cpu", **kwargs):
+        super().__init__(block=Bottleneck, **{k: v for k, v in kwargs.items() if v is not None})
         self.classify = classify
         self.pool = pool
         self.device = device
