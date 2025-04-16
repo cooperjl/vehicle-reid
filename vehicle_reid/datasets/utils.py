@@ -97,8 +97,6 @@ def match_dataset(split: str, normalise: bool = True):
                 transform=transform,
             )
         case _:
-            raise ValueError(
-                "TODO: other datasets, or a bug in the code not parsing dataset through argparse."
-            )
+            raise ValueError("Error: invalid dataset, please select from: vric, veri.")
 
     return dataset
