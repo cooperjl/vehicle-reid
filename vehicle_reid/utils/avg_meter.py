@@ -4,6 +4,7 @@ class AverageMeter(object):
 
     Credit: https://github.com/pytorch/examples/blob/5dfeb46902baf444010f2f54bcf4dfbea109ae4d/imagenet/main.py#L423-L441
     """
+
     def __init__(self):
         self.reset()
 
@@ -18,4 +19,3 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-

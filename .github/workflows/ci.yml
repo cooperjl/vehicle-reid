@@ -21,9 +21,11 @@ jobs:
         with:
           python-version-file: "pyproject.toml"
 
-      - name: Lint with Ruff
-        run: uv run ruff check vehicle_reid tests
-
       - name: Test with pytest
         run: uv run pytest tests
 
+      - name: Check Lint with Ruff
+        run: uv run ruff check vehicle_reid tests
+      
+      - name: Check Format with Ruff
+        run: uv run ruff format --check vehicle_reid tests

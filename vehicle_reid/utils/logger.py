@@ -16,7 +16,7 @@ class TqdmHandler(logging.StreamHandler):
             self.handleError(record)
 
 
-def configure_logger(log_dir: str=None, config_name: str=None):
+def configure_logger(log_dir: str = None, config_name: str = None):
     """
     Configure the logging module, to setup printing the log to stdout, handle the log with tqdm, and
     save the log to an appropriately named file.
@@ -27,7 +27,7 @@ def configure_logger(log_dir: str=None, config_name: str=None):
         Directory to save the log to. If not specified, do not save a log. In this case, logging still needs to
         be setup, just the file handler will not be enabled.
     config_name : str, optinal
-        Name of the config file used, to be used in the name of the log file. If not specified, just defaults to 
+        Name of the config file used, to be used in the name of the log file. If not specified, just defaults to
         "log" instead.
     """
     stream_handler = TqdmHandler()
@@ -38,7 +38,9 @@ def configure_logger(log_dir: str=None, config_name: str=None):
         name = config_name if config_name else "log"
         timestamp = datetime.now().astimezone().strftime("%Y%m%dT%H%M%S")
 
-        file_handler = logging.FileHandler(os.path.join(log_dir, f"{name}-{timestamp}.txt"), mode="w")
+        file_handler = logging.FileHandler(
+            os.path.join(log_dir, f"{name}-{timestamp}.txt"), mode="w"
+        )
         handlers.append(file_handler)
 
     logging.basicConfig(
@@ -46,4 +48,3 @@ def configure_logger(log_dir: str=None, config_name: str=None):
         format="%(asctime)s %(name)s %(levelname)s: %(message)s",
         handlers=handlers,
     )
-

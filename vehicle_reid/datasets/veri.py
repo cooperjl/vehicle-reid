@@ -9,8 +9,8 @@ from .base import VehicleReIdDataset
 class VeRi(VehicleReIdDataset):
     """
     VeRi-776 Dataset class.
-    
-    Attributes 
+
+    Attributes
     ----------
     train_classes : int
         Number of classes in the train split.
@@ -29,12 +29,12 @@ class VeRi(VehicleReIdDataset):
     """
 
     def __init__(
-        self, 
+        self,
         root: str,
-        split: str='train',
-        image_index: Optional[str]=None,
-        label_index: Optional[str]=None,
-        transform: Optional[Callable]=None,
+        split: str = "train",
+        image_index: Optional[str] = None,
+        label_index: Optional[str] = None,
+        transform: Optional[Callable] = None,
     ) -> None:
         """
         Initialise the class.
@@ -63,22 +63,27 @@ class VeRi(VehicleReIdDataset):
         self.cid_col = "cameraID"
 
         match split:
-            case 'train':
-                self.img_dir = os.path.join(root, 'image_train')
-                img_labels = os.path.join(root, 'train_label.xml')
-            case 'query':
-                self.img_dir = os.path.join(root, 'image_query')
-                img_labels = os.path.join(root, 'test_label.xml')
-            case 'gallery':
-                self.img_dir = os.path.join(root, 'image_test')
-                img_labels = os.path.join(root, 'test_label.xml')
+            case "train":
+                self.img_dir = os.path.join(root, "image_train")
+                img_labels = os.path.join(root, "train_label.xml")
+            case "query":
+                self.img_dir = os.path.join(root, "image_query")
+                img_labels = os.path.join(root, "test_label.xml")
+            case "gallery":
+                self.img_dir = os.path.join(root, "image_test")
+                img_labels = os.path.join(root, "test_label.xml")
             case _:
                 raise ValueError("split must be train, query, or gallery")
 
-        self.img_labels = pd.read_xml(img_labels, xpath='.//Item', encoding='gb2312', parser="etree").iloc[:, 0:3]
+        self.img_labels = pd.read_xml(
+            img_labels, xpath=".//Item", encoding="gb2312", parser="etree"
+        ).iloc[:, 0:3]
 
         # filter train labels down to just queries if split is query
-        if split == 'query':
-            queries = pd.read_csv(os.path.join(root, 'name_query.txt'), header=None).squeeze()
-            self.img_labels = self.img_labels[self.img_labels[self.name_col].isin(queries)].reset_index()
-
+        if split == "query":
+            queries = pd.read_csv(
+                os.path.join(root, "name_query.txt"), header=None
+            ).squeeze()
+            self.img_labels = self.img_labels[
+                self.img_labels[self.name_col].isin(queries)
+            ].reset_index()

@@ -10,6 +10,7 @@ from vehicle_reid.utils import load_checkpoint
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
 
+
 def main():
     """
     Main testing function, which initialises the model, loads a model if given, and calls the evaluation function.
@@ -23,4 +24,3 @@ def main():
         load_checkpoint(cfg.MODEL.CHECKPOINT, model)
 
     eval_model(model)
-

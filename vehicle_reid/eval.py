@@ -8,6 +8,7 @@ from vehicle_reid.datasets import load_data
 
 logger = logging.getLogger(__name__)
 
+
 @torch.no_grad()
 def eval_model(model):
     """
@@ -22,7 +23,9 @@ def eval_model(model):
     _, queryloader = load_data("query")
     _, galleryloader = load_data("gallery")
 
-    distmat, q_labels, g_labels, q_camids, g_camids = calculate_distmat(model, queryloader, galleryloader)
+    distmat, q_labels, g_labels, q_camids, g_camids = calculate_distmat(
+        model, queryloader, galleryloader
+    )
     cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
 
     logger.info(f"mAP: {mAP:.1%}")
@@ -61,13 +64,19 @@ def calculate_distmat(model, queryloader, galleryloader):
     """
     model.eval()
 
-    q_features, q_labels, q_camids = extract_features(model, queryloader, desc="extracting features for query images")
-    g_features, g_labels, g_camids = extract_features(model, galleryloader, desc="extracting features for gallery images")
+    q_features, q_labels, q_camids = extract_features(
+        model, queryloader, desc="extracting features for query images"
+    )
+    g_features, g_labels, g_camids = extract_features(
+        model, galleryloader, desc="extracting features for gallery images"
+    )
 
     qn, gn = q_features.size(0), g_features.size(0)
 
-    distmat = torch.pow(q_features, 2).sum(dim=1, keepdim=True).expand(qn, gn) + \
-              torch.pow(g_features, 2).sum(dim=1, keepdim=True).expand(gn, qn).t()
+    distmat = (
+        torch.pow(q_features, 2).sum(dim=1, keepdim=True).expand(qn, gn)
+        + torch.pow(g_features, 2).sum(dim=1, keepdim=True).expand(gn, qn).t()
+    )
 
     distmat.addmm_(q_features, g_features.t(), beta=1, alpha=-2)
     distmat = distmat.numpy()
@@ -76,7 +85,7 @@ def calculate_distmat(model, queryloader, galleryloader):
 
 
 @torch.no_grad()
-def extract_features(model, dataloader, desc: str=""):
+def extract_features(model, dataloader, desc: str = ""):
     """
     Function which extracts the features over the dataset using the dataloader.
 
@@ -111,7 +120,14 @@ def extract_features(model, dataloader, desc: str=""):
 
 
 @torch.no_grad()
-def eval_veri(distmat: np.ndarray, q_pids: np.ndarray, g_pids: np.ndarray, q_camids: np.ndarray, g_camids: np.ndarray, max_rank: int=10):
+def eval_veri(
+    distmat: np.ndarray,
+    q_pids: np.ndarray,
+    g_pids: np.ndarray,
+    q_camids: np.ndarray,
+    g_camids: np.ndarray,
+    max_rank: int = 10,
+):
     """
     Evaluation with veri metric: for each query identity, its gallery images from the same camera view are discarded.
     Credit: https://github.com/KaiyangZhou/deep-person-reid/blob/566a56a2cb255f59ba75aa817032621784df546a/torchreid/metrics/rank.py#L94
@@ -148,7 +164,7 @@ def eval_veri(distmat: np.ndarray, q_pids: np.ndarray, g_pids: np.ndarray, q_cam
     # compute cmc curve for each query
     all_cmc = []
     all_AP = []
-    num_valid_q = 0.  # number of valid query
+    num_valid_q = 0.0  # number of valid query
 
     for q_idx in tqdm(range(num_q), desc="computing evaluation metrics", leave=False):
         # get query pid and camid
@@ -162,7 +178,9 @@ def eval_veri(distmat: np.ndarray, q_pids: np.ndarray, g_pids: np.ndarray, q_cam
 
         # compute cmc curve
         matches = (g_pids[order] == q_pid).astype(np.int32)
-        raw_cmc = matches[keep]  # binary vector, positions with value 1 are correct matches
+        raw_cmc = matches[
+            keep
+        ]  # binary vector, positions with value 1 are correct matches
         if not np.any(raw_cmc):
             # this condition is true when query identity does not appear in gallery
             continue
@@ -171,13 +189,13 @@ def eval_veri(distmat: np.ndarray, q_pids: np.ndarray, g_pids: np.ndarray, q_cam
         cmc[cmc > 1] = 1
 
         all_cmc.append(cmc[:max_rank])
-        num_valid_q += 1.
+        num_valid_q += 1.0
 
         # compute average precision
         # reference: https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Average_precision
         num_rel = raw_cmc.sum()
         tmp_cmc = raw_cmc.cumsum()
-        tmp_cmc = [x / (i + 1.) for i, x in enumerate(tmp_cmc)]
+        tmp_cmc = [x / (i + 1.0) for i, x in enumerate(tmp_cmc)]
         tmp_cmc = np.asarray(tmp_cmc) * raw_cmc
         AP = tmp_cmc.sum() / num_rel
         all_AP.append(AP)
@@ -193,4 +211,3 @@ def eval_veri(distmat: np.ndarray, q_pids: np.ndarray, g_pids: np.ndarray, q_cam
     mAP = np.mean(all_AP)
 
     return all_cmc, mAP
-

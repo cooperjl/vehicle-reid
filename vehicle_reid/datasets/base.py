@@ -15,12 +15,12 @@ class VehicleReIdDataset(Dataset):
     """
 
     def __init__(
-        self, 
+        self,
         root: str,
-        split: str="train",
-        image_index: Optional[str]=None,
-        label_index: Optional[str]=None,
-        transform: Optional[Callable]=None,
+        split: str = "train",
+        image_index: Optional[str] = None,
+        label_index: Optional[str] = None,
+        transform: Optional[Callable] = None,
     ) -> None:
         """
         Parameters
@@ -40,12 +40,12 @@ class VehicleReIdDataset(Dataset):
         """
         self.root = root
         self.split = split
-        
+
         if image_index:
-            with open(image_index, 'r') as f:
+            with open(image_index, "r") as f:
                 self.image_index = json.load(f)
         if label_index:
-            with open(label_index, 'r') as f:
+            with open(label_index, "r") as f:
                 self.label_index = json.load(f)
                 self.max_label = max(self.label_index.keys())
                 self.label_index_keys = [int(k) for k in self.label_index.keys()]
@@ -60,7 +60,11 @@ class VehicleReIdDataset(Dataset):
         image = decode_image(img_path)
         label = self.img_labels.loc[idx, self.id_col]
         cam_id = self.img_labels.loc[idx, self.cid_col]
-        target = self.label_index_keys.index(label) if label in self.label_index_keys else torch.empty(0)
+        target = (
+            self.label_index_keys.index(label)
+            if label in self.label_index_keys
+            else torch.empty(0)
+        )
         if self.image_index is None:
             index = None
         elif self.img_labels.loc[idx, self.name_col] not in self.image_index:
@@ -75,7 +79,9 @@ class VehicleReIdDataset(Dataset):
     def get_grouped(self):
         """Used to get the dataset grouped by classes, used for the gms script."""
         img_path_with_labels = self.img_labels.copy()
-        img_path_with_labels.iloc[:, 0] = self.img_dir + os.sep + img_path_with_labels.iloc[:, 0]
+        img_path_with_labels.iloc[:, 0] = (
+            self.img_dir + os.sep + img_path_with_labels.iloc[:, 0]
+        )
 
         grouped = img_path_with_labels.groupby(self.id_col)[self.name_col]
 
@@ -84,4 +90,3 @@ class VehicleReIdDataset(Dataset):
     def get_by_index(self, label: str, index: int) -> int:
         """Get by the label index."""
         return self.label_index[label][index]
-    

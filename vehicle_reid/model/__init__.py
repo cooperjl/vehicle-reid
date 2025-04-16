@@ -3,13 +3,20 @@ from .convnext import convnext_tiny, convnext_small
 from .model import Model
 
 models = {
-    'resnet50': {'model': resnet50, 'features': 2048},
-    'resnet101': {'model': resnet101, 'features': 2048},
-    'convnext-tiny': {'model': convnext_tiny, 'features': 768},
-    'convnext-small': {'model': convnext_small, 'features': 768},
+    "resnet50": {"model": resnet50, "features": 2048},
+    "resnet101": {"model": resnet101, "features": 2048},
+    "convnext-tiny": {"model": convnext_tiny, "features": 768},
+    "convnext-small": {"model": convnext_small, "features": 768},
 }
 
-def init_model(name: str, num_classes: int=None, two_branch: bool=True, pretrain: bool=True, device: str="cpu"):
+
+def init_model(
+    name: str,
+    num_classes: int = None,
+    two_branch: bool = True,
+    pretrain: bool = True,
+    device: str = "cpu",
+):
     """
     Initialises the model, depending on configuration options.
 
@@ -35,11 +42,18 @@ def init_model(name: str, num_classes: int=None, two_branch: bool=True, pretrain
     """
     if name not in list(models.keys()):
         raise ValueError(f"model not found: {name}")
-    
+
     model_dict = models[name]
 
     if two_branch:
-        return Model(model_dict['model'], in_channels=model_dict['features'], num_classes=num_classes, pretrain=pretrain, device=device)
+        return Model(
+            model_dict["model"],
+            in_channels=model_dict["features"],
+            num_classes=num_classes,
+            pretrain=pretrain,
+            device=device,
+        )
     else:
-        return model_dict['model'](num_classes=num_classes, pretrain=pretrain, device=device)
-
+        return model_dict["model"](
+            num_classes=num_classes, pretrain=pretrain, device=device
+        )

@@ -10,7 +10,7 @@ class VRIC(VehicleReIdDataset):
     """
     VRIC Dataset class.
 
-    Attributes 
+    Attributes
     ----------
     train_classes : int
         Number of classes in the train split.
@@ -29,12 +29,12 @@ class VRIC(VehicleReIdDataset):
     """
 
     def __init__(
-        self, 
+        self,
         root: str,
-        split: str='train',
-        image_index: Optional[str]=None,
-        label_index: Optional[str]=None,
-        transform: Optional[Callable]=None,
+        split: str = "train",
+        image_index: Optional[str] = None,
+        label_index: Optional[str] = None,
+        transform: Optional[Callable] = None,
     ) -> None:
         """
         Initialise the class.
@@ -55,7 +55,7 @@ class VRIC(VehicleReIdDataset):
             transform to apply to the images.
         """
         super().__init__(root, split, image_index, label_index, transform)
-        
+
         self.train_classes = 2811
         self.name = "vric"
         self.name_col = 0
@@ -63,17 +63,18 @@ class VRIC(VehicleReIdDataset):
         self.cid_col = 2
 
         match split:
-            case 'train':
-                self.img_dir = os.path.join(root, 'train_images')
-                img_labels = os.path.join(root, 'vric_train.txt')
-            case 'query':
-                self.img_dir = os.path.join(root, 'probe_images')
-                img_labels = os.path.join(root, 'vric_probe.txt')
-            case 'gallery':
-                self.img_dir = os.path.join(root, 'gallery_images')
-                img_labels = os.path.join(root, 'vric_gallery.txt')
+            case "train":
+                self.img_dir = os.path.join(root, "train_images")
+                img_labels = os.path.join(root, "vric_train.txt")
+            case "query":
+                self.img_dir = os.path.join(root, "probe_images")
+                img_labels = os.path.join(root, "vric_probe.txt")
+            case "gallery":
+                self.img_dir = os.path.join(root, "gallery_images")
+                img_labels = os.path.join(root, "vric_gallery.txt")
             case _:
                 raise ValueError("split must be train, query, or gallery")
 
-        self.img_labels = pd.read_csv(img_labels, sep=' ', header=None, usecols=[0, 1, 2])
-
+        self.img_labels = pd.read_csv(
+            img_labels, sep=" ", header=None, usecols=[0, 1, 2]
+        )

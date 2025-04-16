@@ -12,6 +12,7 @@ from vehicle_reid.utils import NumpyEncoder, pad_label
 
 logger = logging.getLogger(__name__)
 
+
 def main():
     """
     Main function, which computes the index files and gms files for dataset specified using configuration file, and
@@ -21,7 +22,7 @@ def main():
     dataset = match_dataset("train")
 
     output = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
-    if(not os.path.exists(output)):
+    if not os.path.exists(output):
         os.mkdir(output)
         logger.info(f"Output directory created at: {output}")
 
@@ -32,12 +33,11 @@ def main():
 
     # create the index for the gms values
     image_index = {}
-    label_index = {} # guarantee the order matches the rest of script for future loading
+    label_index = {}  # guarantee the order matches the rest of script for future loading
     label_idx = 0
     for label, images in grouped:
         padded_label = pad_label(label, cfg.DATASET.NAME)
         # "label": [<image_name>.jpg, ..., <image_name>.jpg]
-        #label_index[padded_label] = [os.path.basename(image) for image in images]
         label_index[padded_label] = []
         # idx is the index of the image in the class adjacency matrix
         for image_idx, image in enumerate(images):
@@ -47,10 +47,10 @@ def main():
             label_index[padded_label].append(label_idx)
             label_idx += 1
 
-    with open(os.path.join(output, "image_index.json"), 'w') as f:
+    with open(os.path.join(output, "image_index.json"), "w") as f:
         json.dump(image_index, f, cls=NumpyEncoder)
-    
-    with open(os.path.join(output, "label_index.json"), 'w') as f:
+
+    with open(os.path.join(output, "label_index.json"), "w") as f:
         json.dump(label_index, f, cls=NumpyEncoder)
 
     total_iters = len(dataset)
@@ -62,10 +62,14 @@ def main():
 
             # only compute if the file does not exist, allowing to continue from previous stopping point
             if not os.path.isfile(filename):
-                pbar.set_description(f"Processing {cfg.DATASET.NAME} gms matches for class {label:4} with {len(images):2} images")
-                adj_matrix = process_class(images.to_numpy(), cfg.INPUT.WIDTH, cfg.INPUT.HEIGHT, orb, bf, pbar)
+                pbar.set_description(
+                    f"Processing {cfg.DATASET.NAME} gms matches for class {label:4} with {len(images):2} images"
+                )
+                adj_matrix = process_class(
+                    images.to_numpy(), cfg.INPUT.WIDTH, cfg.INPUT.HEIGHT, orb, bf, pbar
+                )
 
-                with open(filename, 'w') as f:
+                with open(filename, "w") as f:
                     json.dump(adj_matrix, f, cls=NumpyEncoder)
             else:
                 pbar.update(len(images))
@@ -73,7 +77,14 @@ def main():
     logger.info(f"Processing complete. Outputs written to {output}")
 
 
-def process_class(image_paths: np.ndarray, width: int, height: int, orb: cv.ORB, bf: cv.BFMatcher, pbar: tqdm) -> np.ndarray:
+def process_class(
+    image_paths: np.ndarray,
+    width: int,
+    height: int,
+    orb: cv.ORB,
+    bf: cv.BFMatcher,
+    pbar: tqdm,
+) -> np.ndarray:
     """
     Calculate the adjacency matrix of a given class of images.
 
@@ -108,28 +119,33 @@ def process_class(image_paths: np.ndarray, width: int, height: int, orb: cv.ORB,
 
         kp1, des1 = orb.detectAndCompute(img1, None)
 
-        for j in range(i+1, n):
+        for j in range(i + 1, n):
             img2 = cv.imread(image_paths[j], cv.IMREAD_GRAYSCALE)
             img2 = cv.resize(img2, (width, height))
 
             kp2, des2 = orb.detectAndCompute(img2, None)
-                
-            n_matches = gms_matches(bf, img1.shape[:2], img2.shape[:2], kp1, des1, kp2, des2)
+
+            n_matches = gms_matches(
+                bf, img1.shape[:2], img2.shape[:2], kp1, des1, kp2, des2
+            )
 
             # symmeterical, so update both at once
             adj_matrix[i, j] = n_matches
             adj_matrix[j, i] = n_matches
 
         pbar.update(1)
-    
+
     return adj_matrix
 
 
 def gms_matches(
     bf: cv.BFMatcher,
-    size1: np.ndarray, size2: np.ndarray,
-    kp1: np.ndarray, des1: np.ndarray,
-    kp2: np.ndarray, des2: np.ndarray,
+    size1: np.ndarray,
+    size2: np.ndarray,
+    kp1: np.ndarray,
+    des1: np.ndarray,
+    kp2: np.ndarray,
+    des2: np.ndarray,
 ) -> int:
     """
     Computes the number of GMS matches between two images.
@@ -167,17 +183,22 @@ def gms_matches(
         logger.error(error)
         raise ValueError(error)
 
-    if(des1.dtype != [np.uint8, np.float32]) or (des1.dtype != [np.uint8, np.float32]):
+    if (des1.dtype != [np.uint8, np.float32]) or (des1.dtype != [np.uint8, np.float32]):
         des1 = des1.astype(np.uint8)
-            
-    if(des2.dtype != [np.uint8, np.float32]) or (des2.dtype != [np.uint8, np.float32]):
+
+    if (des2.dtype != [np.uint8, np.float32]) or (des2.dtype != [np.uint8, np.float32]):
         des2 = des2.astype(np.uint8)
 
     matches_bf = bf.match(des1, des2)
-    matches_gms = cv.xfeatures2d.matchGMS(size1=size1, size2=size2,
-                                          keypoints1=kp1, keypoints2=kp2,
-                                          matches1to2=matches_bf,
-                                          withScale=False, withRotation=True)
+    matches_gms = cv.xfeatures2d.matchGMS(
+        size1=size1,
+        size2=size2,
+        keypoints1=kp1,
+        keypoints2=kp2,
+        matches1to2=matches_bf,
+        withScale=False,
+        withRotation=True,
+    )
 
     return len(matches_gms)
 
@@ -201,9 +222,8 @@ def load_data(gms_path: str) -> dict[str, list[list[str]]]:
 
     for name in entries:
         if name != "index.json":
-            with open(os.path.join(gms_path, name), 'r') as f:
+            with open(os.path.join(gms_path, name), "r") as f:
                 s = os.path.splitext(name)[0]
                 gms[s] = np.array(json.load(f))
 
     return gms
-

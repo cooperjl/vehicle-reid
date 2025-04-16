@@ -24,6 +24,7 @@ scaler = torch.GradScaler()
 
 logger = logging.getLogger(__name__)
 
+
 def train():
     """
     Main training function, to train a model using the parameters in the specified configuration file.
@@ -38,7 +39,12 @@ def train():
 
     dataset, dataloader = load_data("train")
 
-    model = init_model(cfg.MODEL.ARCH, num_classes=dataset.train_classes, two_branch=cfg.MODEL.TWO_BRANCH, device=device)
+    model = init_model(
+        cfg.MODEL.ARCH,
+        num_classes=dataset.train_classes,
+        two_branch=cfg.MODEL.TWO_BRANCH,
+        device=device,
+    )
     model = model.to(device)
 
     optimizer = init_optimizer(model.named_parameters())
@@ -47,18 +53,32 @@ def train():
 
     if cfg.MODEL.CHECKPOINT:
         start_epoch = load_checkpoint(cfg.MODEL.CHECKPOINT, model, optimizer)
-    
-    scheduler = MultiStepLR(optimizer, milestones=cfg.SOLVER.MILESTONES, gamma=cfg.SOLVER.GAMMA, last_epoch=start_epoch-1)
+
+    scheduler = MultiStepLR(
+        optimizer,
+        milestones=cfg.SOLVER.MILESTONES,
+        gamma=cfg.SOLVER.GAMMA,
+        last_epoch=start_epoch - 1,
+    )
 
     for epoch in range(start_epoch, cfg.SOLVER.EPOCHS):
-        logger.info(f"Epoch {epoch+1}:")
-        train_one_epoch(model, optimizer, dataset, dataloader, gms_dict, triplet_loss_fn, ce_loss_fn, desc=f"epoch {epoch+1}")
+        logger.info(f"Epoch {epoch + 1}:")
+        train_one_epoch(
+            model,
+            optimizer,
+            dataset,
+            dataloader,
+            gms_dict,
+            triplet_loss_fn,
+            ce_loss_fn,
+            desc=f"epoch {epoch + 1}",
+        )
         eval_model(model)
         scheduler.step()
 
-        if (epoch+1) % cfg.MISC.SAVE_FREQ == 0:
-            logger.info(f"Saving checkpoint at epoch {epoch+1}")
-            save_checkpoint(epoch+1, model.state_dict(), optimizer.state_dict())
+        if (epoch + 1) % cfg.MISC.SAVE_FREQ == 0:
+            logger.info(f"Saving checkpoint at epoch {epoch + 1}")
+            save_checkpoint(epoch + 1, model.state_dict(), optimizer.state_dict())
 
 
 def train_one_epoch(
@@ -66,11 +86,11 @@ def train_one_epoch(
     optimizer: torch.optim.Optimizer,
     dataset,
     dataloader,
-    gms_dict: dict, 
-    triplet_loss_fn: TripletLoss, 
+    gms_dict: dict,
+    triplet_loss_fn: TripletLoss,
     ce_loss_fn: CrossEntropyLoss,
-    desc: str="",
-    ):
+    desc: str = "",
+):
     """
     Singular epoch training function.
 
@@ -98,25 +118,36 @@ def train_one_epoch(
 
     model.train()
 
-    for batch_idx, (images, labels, indices, _, targets) in enumerate(tqdm(dataloader, desc=desc)):
+    for batch_idx, (images, labels, indices, _, targets) in enumerate(
+        tqdm(dataloader, desc=desc)
+    ):
         start = time.time()
 
-        triplets, tri_labels = mine_triplets(dataset, gms_dict, images, labels, indices, targets)
+        triplets, tri_labels = mine_triplets(
+            dataset, gms_dict, images, labels, indices, targets
+        )
 
         optimizer.zero_grad()
 
         triplets = triplets.to(device)
         tri_labels = tri_labels.to(device)
 
-        with torch.autocast(device_type=cfg.MODEL.DEVICE) if cfg.SOLVER.AMP else nullcontext():
+        with (
+            torch.autocast(device_type=cfg.MODEL.DEVICE)
+            if cfg.SOLVER.AMP
+            else nullcontext()
+        ):
             outputs, features = model(triplets)
 
             # need to decide whether to calculate cross entropy loss for whole triplet or just anchor
-            ce_loss = ce_loss_fn(outputs[0:cfg.SOLVER.BATCH_SIZE], tri_labels[0:cfg.SOLVER.BATCH_SIZE])
+            ce_loss = ce_loss_fn(
+                outputs[0 : cfg.SOLVER.BATCH_SIZE],
+                tri_labels[0 : cfg.SOLVER.BATCH_SIZE],
+            )
             triplet_loss = triplet_loss_fn(features, tri_labels)
 
             loss = (cfg.LOSS.LAMBDA_TRI * triplet_loss) + (cfg.LOSS.LAMBDA_CE * ce_loss)
-        
+
         if cfg.SOLVER.AMP:
             scaler.scale(loss).backward()
             scaler.step(optimizer)
@@ -125,9 +156,10 @@ def train_one_epoch(
             loss.backward()
             optimizer.step()
 
-        losses.update(loss.item(), tri_labels.size(0)) # TODO: amp support
+        losses.update(loss.item(), tri_labels.size(0))  # TODO: amp support
         times.update(time.time() - start)
 
         if batch_idx % 100 == 0:
-            logger.info(f"Loss: {losses.val:.4f} ({losses.avg:.4f}), Time: {times.val:.3f}s ({times.avg:.3f}s)")
-
+            logger.info(
+                f"Loss: {losses.val:.4f} ({losses.avg:.4f}), Time: {times.val:.3f}s ({times.avg:.3f}s)"
+            )

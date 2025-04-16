@@ -10,8 +10,12 @@ from vehicle_reid.utils import load_weights
 
 
 class FeatureResNet(ResNet):
-    def __init__(self, classify: bool=True, pool: bool=True, device: str="cpu", **kwargs):
-        super().__init__(block=Bottleneck, **{k: v for k, v in kwargs.items() if v is not None})
+    def __init__(
+        self, classify: bool = True, pool: bool = True, device: str = "cpu", **kwargs
+    ):
+        super().__init__(
+            block=Bottleneck, **{k: v for k, v in kwargs.items() if v is not None}
+        )
         self.classify = classify
         self.pool = pool
         self.device = device
@@ -32,7 +36,7 @@ class FeatureResNet(ResNet):
         x = self.layer4(x)
 
         local_f = x
-        
+
         global_f = self.pool_and_flatten(x)
 
         f = global_f if self.pool else local_f
@@ -43,7 +47,14 @@ class FeatureResNet(ResNet):
         else:
             return f
 
-def resnet50(num_classes: int, pretrain: bool=True, classify: bool=True, pool: bool=True, device: str="cpu") -> FeatureResNet:
+
+def resnet50(
+    num_classes: int,
+    pretrain: bool = True,
+    classify: bool = True,
+    pool: bool = True,
+    device: str = "cpu",
+) -> FeatureResNet:
     model = FeatureResNet(
         layers=[3, 4, 6, 3],
         num_classes=num_classes,
@@ -57,7 +68,14 @@ def resnet50(num_classes: int, pretrain: bool=True, classify: bool=True, pool: b
 
     return model
 
-def resnet101(num_classes: int, pretrain=True, classify=True, pool: bool=True, device: str="cpu") -> FeatureResNet:
+
+def resnet101(
+    num_classes: int,
+    pretrain=True,
+    classify=True,
+    pool: bool = True,
+    device: str = "cpu",
+) -> FeatureResNet:
     model = FeatureResNet(
         layers=[3, 4, 23, 3],
         num_classes=num_classes,
@@ -70,4 +88,3 @@ def resnet101(num_classes: int, pretrain=True, classify=True, pool: bool=True, d
         load_weights(model=model, weights=ResNet101_Weights.DEFAULT.get_state_dict())
 
     return model
-

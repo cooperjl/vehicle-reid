@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def configure_ax(ax, colour):
     ax.patch.set_edgecolor(colour)
     ax.patch.set_linewidth(8.0)
-    ax.spines[['right', 'top', 'left', 'bottom']].set_visible(False)
+    ax.spines[["right", "top", "left", "bottom"]].set_visible(False)
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
 
@@ -39,7 +39,7 @@ def visualise_ranked_results(distmat, queryset, galleryset):
     plt.tight_layout()
 
     indices = np.argsort(distmat, axis=1)
-    q_idx =  np.random.randint(len(queryset))
+    q_idx = np.random.randint(len(queryset))
 
     # Query image
     q_img, q_label, _, q_camid, _ = queryset[q_idx]
@@ -59,7 +59,7 @@ def visualise_ranked_results(distmat, queryset, galleryset):
         invalid = (q_label == g_label) and (q_camid == g_camid)
         if not invalid:
             # Gallery plot
-            ax = plt.subplot(1, 11, rank_idx+1)
+            ax = plt.subplot(1, 11, rank_idx + 1)
             colour = "limegreen" if q_label == g_label else "red"
             configure_ax(ax, colour)
             plt.title(g_label)
@@ -70,6 +70,7 @@ def visualise_ranked_results(distmat, queryset, galleryset):
                 break
 
     plt.show()
+
 
 def visualise_dataset():
     """
@@ -88,4 +89,3 @@ def visualise_dataset():
 
     distmat, *_ = calculate_distmat(model, queryloader, galleryloader)
     visualise_ranked_results(distmat, queryset, galleryset)
-

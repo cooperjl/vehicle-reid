@@ -19,4 +19,3 @@ def pad_label(label: int, dataset: str) -> str:
             return f"{label:04}"
         case _:
             raise ValueError(f"Invalid dataset: {dataset}")
-

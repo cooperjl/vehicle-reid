@@ -11,17 +11,23 @@ def transform_train():
     ]
 
     if cfg.INPUT.AUGMENT:
-        transform.extend([
-            transforms.RandomHorizontalFlip(p=cfg.INPUT.FLIP_PROB),
-            transforms.RandomRotation(degrees=15),
-            transforms.ColorJitter(brightness=0.2, contrast=0.15, saturation=0, hue=0),
-        ])
+        transform.extend(
+            [
+                transforms.RandomHorizontalFlip(p=cfg.INPUT.FLIP_PROB),
+                transforms.RandomRotation(degrees=15),
+                transforms.ColorJitter(
+                    brightness=0.2, contrast=0.15, saturation=0, hue=0
+                ),
+            ]
+        )
 
-    transform.extend([
-        transforms.PILToTensor(),
-        transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=cfg.INPUT.MEAN, std=cfg.INPUT.STD),
-    ])
+    transform.extend(
+        [
+            transforms.PILToTensor(),
+            transforms.ToDtype(torch.float32, scale=True),
+            transforms.Normalize(mean=cfg.INPUT.MEAN, std=cfg.INPUT.STD),
+        ]
+    )
 
     if cfg.INPUT.RAND_ERASE:
         transform.append(
@@ -29,7 +35,8 @@ def transform_train():
         )
 
     return transforms.Compose(transform)
-    
+
+
 def transform_test(normalise=True):
     transform = [
         transforms.Resize(size=cfg.INPUT.WIDTH, antialias=True),
@@ -41,4 +48,3 @@ def transform_test(normalise=True):
         transform.append(transforms.Normalize(mean=cfg.INPUT.MEAN, std=cfg.INPUT.STD))
 
     return transforms.Compose(transform)
-

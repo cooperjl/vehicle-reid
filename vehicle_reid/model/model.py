@@ -8,9 +8,16 @@ from .graph import GraphModule
 
 
 class Model(nn.Module):
-    def __init__(self, model: nn.Module, in_channels: int, num_classes: int, device: str="cpu", pretrain: bool=True) -> None:
+    def __init__(
+        self,
+        model: nn.Module,
+        in_channels: int,
+        num_classes: int,
+        device: str = "cpu",
+        pretrain: bool = True,
+    ) -> None:
         super().__init__()
-        
+
         self.device = device
         self.feature_model = model(num_classes, pretrain, pool=False, device=device)
         self.graph = GraphModule(in_channels=in_channels, device=device)
@@ -23,7 +30,7 @@ class Model(nn.Module):
         return output
 
     def crop_and_pool(self, x: torch.Tensor) -> tuple[torch.Tensor, ...]:
-        crop_size = [math.ceil(x.shape[-1] * (2/3)), math.ceil(x.shape[-2] * (2/3))]
+        crop_size = [math.ceil(x.shape[-1] * (2 / 3)), math.ceil(x.shape[-2] * (2 / 3))]
 
         features = (x,) + transforms.functional.five_crop(x, size=crop_size)
         features = tuple(self.feature_model.pool_and_flatten(f) for f in features)
@@ -51,4 +58,3 @@ class Model(nn.Module):
             return c, output
         else:
             return output
-

@@ -21,10 +21,9 @@ def calculate_normal_values():
         running_std += images.std(dim=2).sum(dim=0)
 
     # print values to be copied into respective config files
-    print(f"mean: {running_mean/len(dataset)}")
-    print(f"std: {running_std/len(dataset)}")
+    print(f"mean: {running_mean / len(dataset)}")
+    print(f"std: {running_std / len(dataset)}")
 
 
 if __name__ == "__main__":
     calculate_normal_values()
-

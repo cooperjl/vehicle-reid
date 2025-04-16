@@ -22,17 +22,27 @@ def init_optimizer(named_parameters) -> optim.Optimizer:
         params = named_parameters
     else:
         params = get_param_groups(named_parameters)
-    
+
     match cfg.SOLVER.OPTIMIZER:
         case "adamw":
-            return optim.AdamW(params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
+            return optim.AdamW(
+                params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY
+            )
         case "adam":
-            return optim.Adam(params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY)
+            return optim.Adam(
+                params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY
+            )
         case "sgd":
-            return optim.SGD(params, lr=cfg.SOLVER.BASE_LR, weight_decay=cfg.SOLVER.WEIGHT_DECAY,
-                             momentum=cfg.SOLVER.MOMENTUM, nesterov=True)
+            return optim.SGD(
+                params,
+                lr=cfg.SOLVER.BASE_LR,
+                weight_decay=cfg.SOLVER.WEIGHT_DECAY,
+                momentum=cfg.SOLVER.MOMENTUM,
+                nesterov=True,
+            )
         case _:
             raise ValueError(f"invalid optimizer: {cfg.SOLVER.OPTIMIZER}")
+
 
 def get_param_groups(named_parameters) -> list[dict[str, float | torch.nn.Parameter]]:
     """
@@ -53,7 +63,7 @@ def get_param_groups(named_parameters) -> list[dict[str, float | torch.nn.Parame
 
     for name, param in named_parameters:
         if not param.requires_grad:
-            continue # continue on frozen weights
+            continue  # continue on frozen weights
         if len(param.shape) == 1 or name.endswith(".bias"):
             # disable decay on batch norm and bias layers
             group_name = "no_decay"
@@ -69,6 +79,5 @@ def get_param_groups(named_parameters) -> list[dict[str, float | torch.nn.Parame
             }
 
         param_group_dict[group_name]["params"].append(param)
-    
-    return list(param_group_dict.values())
 
+    return list(param_group_dict.values())

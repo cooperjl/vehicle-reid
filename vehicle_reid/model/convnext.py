@@ -10,7 +10,9 @@ from vehicle_reid.utils import load_weights
 
 
 class FeatureConvNeXt(ConvNeXt):
-    def __init__(self, classify: bool=True, pool: bool=True, device: str="cpu", **kwargs):
+    def __init__(
+        self, classify: bool = True, pool: bool = True, device: str = "cpu", **kwargs
+    ):
         super().__init__(**{k: v for k, v in kwargs.items() if v is not None})
 
         self.classify = classify
@@ -25,7 +27,7 @@ class FeatureConvNeXt(ConvNeXt):
         x = self.features(x)
 
         local_f = x
-        global_f = self.avgpool(x) # flatten included in classifier, so don't flatten
+        global_f = self.avgpool(x)  # flatten included in classifier, so don't flatten
 
         f = global_f if self.pool else local_f
 
@@ -35,7 +37,14 @@ class FeatureConvNeXt(ConvNeXt):
         else:
             return f
 
-def convnext_tiny(num_classes: int, pretrain: bool=True, classify: bool=True, pool: bool=True, device: str="cpu") -> FeatureConvNeXt:
+
+def convnext_tiny(
+    num_classes: int,
+    pretrain: bool = True,
+    classify: bool = True,
+    pool: bool = True,
+    device: str = "cpu",
+) -> FeatureConvNeXt:
     block_setting = [
         CNBlockConfig(96, 192, 3),
         CNBlockConfig(192, 384, 3),
@@ -53,11 +62,20 @@ def convnext_tiny(num_classes: int, pretrain: bool=True, classify: bool=True, po
     )
 
     if pretrain:
-        load_weights(model=model, weights=ConvNeXt_Tiny_Weights.DEFAULT.get_state_dict())
+        load_weights(
+            model=model, weights=ConvNeXt_Tiny_Weights.DEFAULT.get_state_dict()
+        )
 
     return model
 
-def convnext_small(num_classes: int, pretrain: bool=True, classify: bool=True, pool: bool=True, device: str="cpu") -> FeatureConvNeXt:
+
+def convnext_small(
+    num_classes: int,
+    pretrain: bool = True,
+    classify: bool = True,
+    pool: bool = True,
+    device: str = "cpu",
+) -> FeatureConvNeXt:
     block_setting = [
         CNBlockConfig(96, 192, 3),
         CNBlockConfig(192, 384, 3),
@@ -75,7 +93,8 @@ def convnext_small(num_classes: int, pretrain: bool=True, classify: bool=True, p
     )
 
     if pretrain:
-        load_weights(model=model, weights=ConvNeXt_Small_Weights.DEFAULT.get_state_dict())
+        load_weights(
+            model=model, weights=ConvNeXt_Small_Weights.DEFAULT.get_state_dict()
+        )
 
     return model
-

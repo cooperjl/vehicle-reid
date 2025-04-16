@@ -4,11 +4,13 @@ import torch.nn as nn
 # For consistent importing
 CrossEntropyLoss = nn.CrossEntropyLoss
 
+
 class TripletLoss(nn.Module):
     """
     Triplet loss class, for computing the triplet loss between samples.
     """
-    def __init__(self, margin: float=1.0):
+
+    def __init__(self, margin: float = 1.0):
         super().__init__()
         self.margin = margin
         self.ranking_loss = nn.MarginRankingLoss(margin=margin)
@@ -45,4 +47,3 @@ class TripletLoss(nn.Module):
         y = torch.ones_like(dist_an)
         loss = self.ranking_loss(dist_an, dist_ap, y)
         return loss
-
