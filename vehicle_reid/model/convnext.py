@@ -29,7 +29,7 @@ class FeatureConvNeXt(ConvNeXt):
         local_f = x
         global_f = self.avgpool(x)  # flatten included in classifier, so don't flatten
 
-        f = global_f if self.pool else local_f
+        f = torch.flatten(global_f, 1) if self.pool else local_f
 
         if self.training and self.classify:
             c = self.classifier(global_f)
