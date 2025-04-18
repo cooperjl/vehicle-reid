@@ -6,9 +6,10 @@ import torch
 
 from vehicle_reid.config import cfg
 from vehicle_reid.datasets import load_data
-from vehicle_reid.eval import calculate_distmat
 from vehicle_reid.model import init_model
 from vehicle_reid.utils import load_checkpoint
+
+from .eval import calculate_distmat
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ def visualise_ranked_results(distmat, queryset, galleryset):
     plt.show()
 
 
-def visualise_dataset():
+def visualise():
     """
     Main visualise function, which loads the model and calls the function to visualise the ranked results.
     """

@@ -2,17 +2,15 @@ import argparse
 import logging
 import os
 
-from vehicle_reid import gms, test, train
+from vehicle_reid import eval, train, utils
 from vehicle_reid.config import cfg
-from vehicle_reid.datasets import visualise
-from vehicle_reid.utils import configure_logger, normal_values, set_seed
 
 COMMANDS = {
-    "gms": gms.main,
-    "test": test.main,
-    "train": train.train,
-    "visualise": visualise.visualise_dataset,
-    "normalise": normal_values.calculate_normal_values,
+    "compute-relational-data": utils.compute_relational_data,
+    "calculate-normal-values": utils.calculate_normal_values,
+    "train": train.train_model,
+    "test": eval.test_model,
+    "visualise": eval.visualise,
 }
 
 parser = argparse.ArgumentParser(
@@ -32,7 +30,12 @@ def parse_command():
         help="path to config file",
     )
 
-    parser.add_argument("command", choices=COMMANDS.keys())
+    parser.add_argument(
+        "command",
+        choices=COMMANDS.keys(),
+        metavar="command",
+        help=f"command to run. options are: {', '.join(COMMANDS.keys())}"
+    )
 
     parser.add_argument(
         "config",
@@ -46,18 +49,18 @@ def parse_command():
     if args.config_file is not None:
         cfg.merge_from_file(args.config_file)
 
-        configure_logger(
+        utils.configure_logger(
             cfg.MISC.LOG_DIR, os.path.splitext(os.path.basename(args.config_file))[0]
         )
         logger = logging.getLogger(__name__)
         logger.info(f"loaded configuration file: {args.config_file}")
     else:
-        configure_logger()
+        utils.configure_logger()
 
     cfg.merge_from_list(args.config)
     cfg.freeze()
 
-    set_seed()
+    utils.set_seed()
 
     # execute the command obtained from the dict
     COMMANDS[args.command]()

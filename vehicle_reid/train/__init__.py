@@ -1,3 +1,3 @@
-from .train import train
+from .train import train_model
 
-__all__ = ["train"]
+__all__ = ["train_model"]

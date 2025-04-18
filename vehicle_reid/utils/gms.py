@@ -13,7 +13,7 @@ from vehicle_reid.utils import NumpyEncoder, pad_label
 logger = logging.getLogger(__name__)
 
 
-def main():
+def compute_relational_data():
     """
     Main function, which computes the index files and gms files for dataset specified using configuration file, and
     writes them to .json files.
@@ -203,9 +203,9 @@ def gms_matches(
     return len(matches_gms)
 
 
-def load_data(gms_path: str) -> dict[str, list[list[str]]]:
+def load_relational_data(gms_path: str) -> dict[str, list[list[str]]]:
     """
-    Load the gms data for use in training.
+    Load the relational (gms) data for use in training.
 
     Parameters
     ----------

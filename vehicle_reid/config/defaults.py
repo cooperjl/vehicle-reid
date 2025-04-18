@@ -73,7 +73,8 @@ _C.TEST.BATCH_SIZE = 8
 # ---------------------------
 _C.MISC = CN()
 _C.MISC.GMS_PATH = "gms"
-_C.MISC.LOG_DIR = None
+_C.MISC.LOG_DIR = "logs"
 _C.MISC.SAVE_DIR = "checkpoints"
+_C.MISC.CACHE_PATH = "cache"
 _C.MISC.SAVE_FREQ = 10
 _C.MISC.SEED = None

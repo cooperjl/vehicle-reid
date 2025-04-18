@@ -11,7 +11,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
 
 
-def main():
+def test_model():
     """
     Main testing function, which initialises the model, loads a model if given, and calls the evaluation function.
     """

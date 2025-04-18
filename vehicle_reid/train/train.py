@@ -7,12 +7,11 @@ import torch
 from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
-from vehicle_reid import gms
+from vehicle_reid import utils
 from vehicle_reid.config import cfg
 from vehicle_reid.datasets import load_data
 from vehicle_reid.eval import eval_model
 from vehicle_reid.model import init_model
-from vehicle_reid.utils import AverageMeter, load_checkpoint, save_checkpoint
 
 from .losses import CrossEntropyLoss, TripletLoss
 from .mine_triplets import mine_triplets
@@ -25,7 +24,7 @@ scaler = torch.GradScaler()
 logger = logging.getLogger(__name__)
 
 
-def train():
+def train_model():
     """
     Main training function, to train a model using the parameters in the specified configuration file.
     """
@@ -35,7 +34,7 @@ def train():
     ce_loss_fn = CrossEntropyLoss(label_smoothing=0.1)
 
     gms_path = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
-    gms_dict = gms.load_data(gms_path)
+    gms_dict = utils.load_relational_data(gms_path)
 
     dataset, dataloader = load_data("train")
 
@@ -52,7 +51,7 @@ def train():
     start_epoch = 0
 
     if cfg.MODEL.CHECKPOINT:
-        start_epoch = load_checkpoint(cfg.MODEL.CHECKPOINT, model, optimizer)
+        start_epoch = utils.load_checkpoint(cfg.MODEL.CHECKPOINT, model, optimizer)
 
     scheduler = MultiStepLR(
         optimizer,
@@ -78,7 +77,7 @@ def train():
 
         if (epoch + 1) % cfg.MISC.SAVE_FREQ == 0:
             logger.info(f"Saving checkpoint at epoch {epoch + 1}")
-            save_checkpoint(epoch + 1, model.state_dict(), optimizer.state_dict())
+            utils.save_checkpoint(epoch + 1, model.state_dict(), optimizer.state_dict())
 
 
 def train_one_epoch(
@@ -113,8 +112,8 @@ def train_one_epoch(
     desc : str, optional
         Optional description label for tqdm progress bar.
     """
-    losses = AverageMeter()
-    times = AverageMeter()
+    losses = utils.AverageMeter()
+    times = utils.AverageMeter()
 
     model.train()
 

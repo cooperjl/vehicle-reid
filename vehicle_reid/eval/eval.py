@@ -6,6 +6,8 @@ from tqdm import tqdm
 
 from vehicle_reid.datasets import load_data
 
+from .cache import cached_features, extract_features
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,9 +69,13 @@ def calculate_distmat(model, queryloader, galleryloader):
     q_features, q_labels, q_camids = extract_features(
         model, queryloader, desc="extracting features for query images"
     )
-    g_features, g_labels, g_camids = extract_features(
-        model, galleryloader, desc="extracting features for gallery images"
-    )
+    #g_features, g_labels, g_camids = extract_features(
+    #    model, galleryloader, desc="extracting features for gallery images"
+    #)
+
+    # Load cached gallery features
+    cache_dict = cached_features(model)
+    g_features, g_labels, g_camids = cache_dict["features"], cache_dict["labels"], cache_dict["camids"]
 
     qn, gn = q_features.size(0), g_features.size(0)
 
@@ -84,39 +90,6 @@ def calculate_distmat(model, queryloader, galleryloader):
     return distmat, q_labels, g_labels, q_camids, g_camids
 
 
-@torch.no_grad()
-def extract_features(model, dataloader, desc: str = ""):
-    """
-    Function which extracts the features over the dataset using the dataloader.
-
-    Parameters
-    ----------
-    model : nn.Module
-        Model to extract the features, expects forward to return a single tensor in evaluation mode.
-    dataloader : DataLoader
-        dataloader of the dataset to evaluate performance using.
-    desc : str, optional
-        Optional description label for tqdm progress bar.
-    """
-    x_features = []
-    x_labels = []
-    x_camids = []
-
-    for images, labels, _, camids, _ in tqdm(dataloader, desc=desc, leave=False):
-        images = images.float().to(model.device)
-        features = model(images)
-        if model.device != "cpu":
-            features = features.to(torch.device("cpu"))
-
-        x_features.append(features)
-        x_labels.extend(labels)
-        x_camids.extend(camids)
-
-    x_features = torch.cat(x_features, 0)
-    x_labels = np.asarray(x_labels)
-    x_camids = np.asarray(x_camids)
-
-    return x_features, x_labels, x_camids
 
 
 @torch.no_grad()
