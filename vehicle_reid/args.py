@@ -34,7 +34,7 @@ def parse_command():
         "command",
         choices=COMMANDS.keys(),
         metavar="command",
-        help=f"command to run. options are: {', '.join(COMMANDS.keys())}"
+        help=f"command to run. options are: {', '.join(COMMANDS.keys())}",
     )
 
     parser.add_argument(

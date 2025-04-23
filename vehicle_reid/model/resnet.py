@@ -6,15 +6,23 @@ from torchvision.models.resnet import (
     ResNet101_Weights,
 )
 
+import torch.nn as nn
 from vehicle_reid.utils import load_weights
+
+from .modules import BottleneckIBN
 
 
 class FeatureResNet(ResNet):
     def __init__(
-        self, classify: bool = True, pool: bool = True, device: str = "cpu", **kwargs
+        self,
+        block: Bottleneck = Bottleneck,
+        classify: bool = True,
+        pool: bool = True,
+        device: str = "cpu",
+        **kwargs,
     ):
         super().__init__(
-            block=Bottleneck, **{k: v for k, v in kwargs.items() if v is not None}
+            block=block, **{k: v for k, v in kwargs.items() if v is not None}
         )
         self.classify = classify
         self.pool = pool
@@ -48,6 +56,48 @@ class FeatureResNet(ResNet):
             return f
 
 
+class FeatureResNetIBN(FeatureResNet):
+    def __init__(self, **kwargs):
+        super().__init__(block=BottleneckIBN, **kwargs)
+
+        for m in self.modules():
+            if isinstance(m, nn.InstanceNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def _make_layer(
+        self,
+        block: Bottleneck,
+        planes: int,
+        blocks: int,
+        stride: int = 1,
+        **_,
+    ) -> nn.Sequential:
+        downsample = None
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                nn.Conv2d(
+                    self.inplanes,
+                    planes * block.expansion,
+                    kernel_size=1,
+                    stride=stride,
+                    bias=False,
+                ),
+                nn.BatchNorm2d(planes * block.expansion),
+            )
+
+        ibn = planes != 512
+        layers = []
+        layers.append(
+            block(self.inplanes, planes, ibn, stride=stride, downsample=downsample)
+        )
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes, ibn))
+
+        return nn.Sequential(*layers)
+
+
 def resnet50(
     num_classes: int,
     pretrain: bool = True,
@@ -69,6 +119,31 @@ def resnet50(
     return model
 
 
+def resnet50_ibn_a(
+    num_classes: int,
+    pretrain: bool = True,
+    classify: bool = True,
+    pool: bool = True,
+    device: str = "cpu",
+) -> FeatureResNet:
+    model = FeatureResNetIBN(
+        layers=[3, 4, 6, 3],
+        num_classes=num_classes,
+        classify=classify,
+        pool=pool,
+        device=device,
+    )
+
+    weights = torch.hub.load_state_dict_from_url(
+        "https://github.com/XingangPan/IBN-Net/releases/download/v1.0/resnet50_ibn_a-d9d0bb7b.pth"
+    )
+
+    if pretrain:
+        load_weights(model=model, weights=weights)
+
+    return model
+
+
 def resnet101(
     num_classes: int,
     pretrain=True,
@@ -86,5 +161,30 @@ def resnet101(
 
     if pretrain:
         load_weights(model=model, weights=ResNet101_Weights.DEFAULT.get_state_dict())
+
+    return model
+
+
+def resnet101_ibn_a(
+    num_classes: int,
+    pretrain: bool = True,
+    classify: bool = True,
+    pool: bool = True,
+    device: str = "cpu",
+) -> FeatureResNet:
+    model = FeatureResNetIBN(
+        layers=[3, 4, 23, 3],
+        num_classes=num_classes,
+        classify=classify,
+        pool=pool,
+        device=device,
+    )
+
+    weights = torch.hub.load_state_dict_from_url(
+        "https://github.com/XingangPan/IBN-Net/releases/download/v1.0/resnet101_ibn_a-59ea0ac6.pth"
+    )
+
+    if pretrain:
+        load_weights(model=model, weights=weights)
 
     return model

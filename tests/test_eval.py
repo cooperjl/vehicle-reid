@@ -1,6 +1,6 @@
 import numpy as np
 
-from vehicle_reid.eval import eval_veri
+from vehicle_reid.eval.eval import eval_veri
 
 # Inspired by original evaluation implementation tests.
 # https://github.com/Cysu/open-reid/blob/3293ca79a07ebee7f995ce647aafa7df755207b8/test/evaluation_metrics/test_cmc.py#L7

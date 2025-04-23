@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from vehicle_reid.config import cfg
-from vehicle_reid.datasets import load_data
+from vehicle_reid.datasets import load_data, match_dataset
 from vehicle_reid.model import init_model
 from vehicle_reid.utils import load_checkpoint
 
@@ -79,7 +79,7 @@ def visualise():
     """
     # use images from the train set
     queryset, queryloader = load_data("query", normalise=False)
-    galleryset, galleryloader = load_data("gallery", normalise=False)
+    galleryset = match_dataset("gallery", normalise=False)
 
     model = init_model(cfg.MODEL.ARCH, two_branch=cfg.MODEL.TWO_BRANCH, device=device)
     model = model.to(device)
@@ -88,5 +88,5 @@ def visualise():
     if cfg.MODEL.CHECKPOINT:
         load_checkpoint(cfg.MODEL.CHECKPOINT, model)
 
-    distmat, *_ = calculate_distmat(model, queryloader, galleryloader)
+    distmat, *_ = calculate_distmat(model, queryloader)
     visualise_ranked_results(distmat, queryset, galleryset)

@@ -23,10 +23,9 @@ def eval_model(model):
         Model to extract the features, expects forward to return a single tensor in evaluation mode.
     """
     _, queryloader = load_data("query")
-    _, galleryloader = load_data("gallery")
 
     distmat, q_labels, g_labels, q_camids, g_camids = calculate_distmat(
-        model, queryloader, galleryloader
+        model, queryloader
     )
     cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
 
@@ -37,7 +36,7 @@ def eval_model(model):
 
 
 @torch.no_grad()
-def calculate_distmat(model, queryloader, galleryloader):
+def calculate_distmat(model, queryloader):
     """
     Function which calculates the distmat using the parameters in the specified configuration file, such as the dataset.
     It also returns important parameters for the evaluation of the model, such as labels and camera ids.
@@ -64,18 +63,20 @@ def calculate_distmat(model, queryloader, galleryloader):
     g_camids : np.ndarray
         1d array containing camera ids under which each gallery instance is captured.
     """
+    training = model.training
     model.eval()
 
     q_features, q_labels, q_camids = extract_features(
         model, queryloader, desc="extracting features for query images"
     )
-    #g_features, g_labels, g_camids = extract_features(
-    #    model, galleryloader, desc="extracting features for gallery images"
-    #)
 
     # Load cached gallery features
-    cache_dict = cached_features(model)
-    g_features, g_labels, g_camids = cache_dict["features"], cache_dict["labels"], cache_dict["camids"]
+    cache_dict = cached_features(model, training)
+    g_features, g_labels, g_camids = (
+        cache_dict["features"],
+        cache_dict["labels"],
+        cache_dict["camids"],
+    )
 
     qn, gn = q_features.size(0), g_features.size(0)
 
@@ -88,8 +89,6 @@ def calculate_distmat(model, queryloader, galleryloader):
     distmat = distmat.numpy()
 
     return distmat, q_labels, g_labels, q_camids, g_camids
-
-
 
 
 @torch.no_grad()

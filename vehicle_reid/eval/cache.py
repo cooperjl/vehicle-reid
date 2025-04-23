@@ -11,18 +11,21 @@ from vehicle_reid.datasets import load_data
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 logger = logging.getLogger(__name__)
 
+
 @torch.no_grad()
-def cached_features(model) -> dict:
+def cached_features(model, training: bool) -> dict:
     model.eval()
-    
-    if cfg.MODEL.CHECKPOINT:
+
+    should_cache = cfg.MODEL.CHECKPOINT is not None and training is False
+
+    if should_cache:
         basename = os.path.split(os.path.basename(cfg.MODEL.CHECKPOINT))[0]
     else:
         basename = ""
 
     filepath = os.path.join(cfg.MISC.CACHE_PATH, f"{basename}-cache.pth")
 
-    if os.path.isfile(filepath):
+    if should_cache and os.path.isfile(filepath):
         cache_dict = torch.load(filepath, weights_only=False)
         logger.info("Loaded cached gallery features")
     else:
@@ -38,11 +41,12 @@ def cached_features(model) -> dict:
             "camids": camids,
         }
 
-        if cfg.MODEL.CHECKPOINT:
+        if should_cache:
             torch.save(cache_dict, filepath)
             logger.info("Cached gallery features")
 
     return cache_dict
+
 
 @torch.no_grad()
 def extract_features(model, dataloader, desc: str = ""):
@@ -77,4 +81,3 @@ def extract_features(model, dataloader, desc: str = ""):
     x_camids = np.asarray(x_camids)
 
     return x_features, x_labels, x_camids
-

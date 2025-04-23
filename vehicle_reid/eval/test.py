@@ -23,4 +23,5 @@ def test_model():
     if cfg.MODEL.CHECKPOINT:
         load_checkpoint(cfg.MODEL.CHECKPOINT, model)
 
+    model.eval()
     eval_model(model)

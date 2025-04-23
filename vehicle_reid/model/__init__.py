@@ -1,10 +1,12 @@
-from .resnet import resnet50, resnet101
+from .resnet import resnet50, resnet101, resnet50_ibn_a, resnet101_ibn_a
 from .convnext import convnext_tiny, convnext_small
 from .model import Model
 
 models = {
     "resnet50": {"model": resnet50, "features": 2048},
     "resnet101": {"model": resnet101, "features": 2048},
+    "resnet50_ibn_a": {"model": resnet50_ibn_a, "features": 2048},
+    "resnet101_ibn_a": {"model": resnet101_ibn_a, "features": 2048},
     "convnext-tiny": {"model": convnext_tiny, "features": 768},
     "convnext-small": {"model": convnext_small, "features": 768},
 }
