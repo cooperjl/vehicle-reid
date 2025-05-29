@@ -2,7 +2,7 @@
 University of York dissertation project in the field of vehicle re-identification.
 
 ## Architecture
-![Architecture Diagram](assets/arch-diagram.pdf)
+![Architecture Diagram](assets/arch-diagram.png)
 ## Results
 Table of final results, where the VeRi-776* row includes
 re-ranked results.
