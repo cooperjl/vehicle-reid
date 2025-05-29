@@ -19,6 +19,8 @@ def mine_triplets(
     """
     Triplet mining function, used to select triplets per batch.
 
+    Credit: https://github.com/adhirajghosh/RPTM_reid/blob/183e1f77a0979ab2ffa08b0bdb1c43ef0f633ad5/train.py#L49
+
     Parameters
     ----------
     dataset : datasets.VehicleReIdDataset

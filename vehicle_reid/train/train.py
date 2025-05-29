@@ -1,10 +1,8 @@
 import logging
 import os
 import time
-from contextlib import nullcontext
 
 import torch
-from torch.optim.lr_scheduler import MultiStepLR
 from tqdm import tqdm
 
 from vehicle_reid import utils
@@ -33,8 +31,8 @@ def train_model():
     triplet_loss_fn = TripletLoss(margin=cfg.LOSS.MARGIN)
     ce_loss_fn = CrossEntropyLoss(label_smoothing=0.1)
 
-    gms_path = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
-    gms_dict = utils.load_relational_data(gms_path)
+    rel_path = os.path.join(cfg.DATASET.PATH, cfg.DATASET.REL_PATH, cfg.DATASET.NAME)
+    rel_dict = utils.load_relational_data(rel_path)
 
     dataset, dataloader = load_data("train")
 
@@ -53,13 +51,6 @@ def train_model():
     if cfg.MODEL.CHECKPOINT:
         start_epoch = utils.load_checkpoint(cfg.MODEL.CHECKPOINT, model, optimizer)
 
-    scheduler = MultiStepLR(
-        optimizer,
-        milestones=cfg.SOLVER.MILESTONES,
-        gamma=cfg.SOLVER.GAMMA,
-        last_epoch=start_epoch - 1,
-    )
-
     for epoch in range(start_epoch, cfg.SOLVER.EPOCHS):
         logger.info(f"Epoch {epoch + 1}:")
         train_one_epoch(
@@ -67,13 +58,12 @@ def train_model():
             optimizer,
             dataset,
             dataloader,
-            gms_dict,
+            rel_dict,
             triplet_loss_fn,
             ce_loss_fn,
             desc=f"epoch {epoch + 1}",
         )
         eval_model(model)
-        scheduler.step()
 
         if (epoch + 1) % cfg.MISC.SAVE_FREQ == 0:
             logger.info(f"Saving checkpoint at epoch {epoch + 1}")
@@ -85,7 +75,7 @@ def train_one_epoch(
     optimizer: torch.optim.Optimizer,
     dataset,
     dataloader,
-    gms_dict: dict,
+    rel_dict: dict,
     triplet_loss_fn: TripletLoss,
     ce_loss_fn: CrossEntropyLoss,
     desc: str = "",
@@ -103,8 +93,8 @@ def train_one_epoch(
         Dataset instance being trained on.
     dataloader : DataLoader
         DataLoader configured for dataset.
-    gms_dict : dict
-        GMS feature match dictionary.
+    rel_dict : dict
+        Relational data dictionary.
     triplet_loss_fn : TripletLoss
         TripletLoss loss function instance.
     ce_loss_fn : CrossEntropyLoss
@@ -123,7 +113,7 @@ def train_one_epoch(
         start = time.time()
 
         triplets, tri_labels = mine_triplets(
-            dataset, gms_dict, images, labels, indices, targets
+            dataset, rel_dict, images, labels, indices, targets
         )
 
         optimizer.zero_grad()
@@ -131,31 +121,20 @@ def train_one_epoch(
         triplets = triplets.to(device)
         tri_labels = tri_labels.to(device)
 
-        with (
-            torch.autocast(device_type=cfg.MODEL.DEVICE)
-            if cfg.SOLVER.AMP
-            else nullcontext()
-        ):
-            outputs, features = model(triplets)
+        outputs, features = model(triplets)
 
-            # need to decide whether to calculate cross entropy loss for whole triplet or just anchor
-            ce_loss = ce_loss_fn(
-                outputs[0 : cfg.SOLVER.BATCH_SIZE],
-                tri_labels[0 : cfg.SOLVER.BATCH_SIZE],
-            )
-            triplet_loss = triplet_loss_fn(features, tri_labels)
+        ce_loss = ce_loss_fn(
+            outputs[0 : cfg.SOLVER.BATCH_SIZE],
+            tri_labels[0 : cfg.SOLVER.BATCH_SIZE],
+        )
+        triplet_loss = triplet_loss_fn(features, tri_labels)
 
-            loss = (cfg.LOSS.LAMBDA_TRI * triplet_loss) + (cfg.LOSS.LAMBDA_CE * ce_loss)
+        loss = (cfg.LOSS.LAMBDA_TRI * triplet_loss) + (cfg.LOSS.LAMBDA_CE * ce_loss)
 
-        if cfg.SOLVER.AMP:
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
-        else:
-            loss.backward()
-            optimizer.step()
+        loss.backward()
+        optimizer.step()
 
-        losses.update(loss.item(), tri_labels.size(0))  # TODO: amp support
+        losses.update(loss.item(), tri_labels.size(0))
         times.update(time.time() - start)
 
         if batch_idx % 100 == 0:

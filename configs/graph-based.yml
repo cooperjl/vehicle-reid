@@ -1,10 +1,10 @@
 MODEL:
-  ARCH: "resnet101"
+  ARCH: "resnet50"
   TWO_BRANCH: True
 
 INPUT:
-  HEIGHT: 192
-  WIDTH: 192
+  HEIGHT: 128
+  WIDTH: 128
   AUGMENT: True
   FLIP_PROB: 0.5
   RAND_ERASE: True
@@ -16,11 +16,14 @@ DATASET:
 
 SOLVER:
   OPTIMIZER: "adamw"
-  EPOCHS: 56
+  EPOCHS: 10
   BASE_LR: 0.00015
   WEIGHT_DECAY: 0.0005
   DECAY_BN_BIAS: False
-  BATCH_SIZE: 12
+  MILESTONES: [20, 40, 60]
+  GAMMA: 0.1
+  BATCH_SIZE: 16
+  AMP: False
 
 LOSS:
   MARGIN: 1.0
@@ -31,6 +34,5 @@ TEST:
   BATCH_SIZE: 48
 
 MISC:
-  LOG_DIR: "./logs/veri"
-  SEED: 1502687543
-  SAVE_FREQ: 10
+  LOG_DIR: "./logs/veri/"
+  SEED: 1234

@@ -36,6 +36,7 @@ class BottleneckIBN(Bottleneck):
     """
     Simple extension for the Bottleneck class which overrides the first bn layer with IBN, for IBN-a.
     """
+
     def __init__(
         self,
         inplanes: int,
@@ -47,4 +48,3 @@ class BottleneckIBN(Bottleneck):
 
         if ibn:
             self.bn1 = IBN(planes)
-

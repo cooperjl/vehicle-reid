@@ -45,11 +45,6 @@ def load_checkpoint(path: str, model: torch.nn.Module, optimizer=None):
         Model to load the state of.
     optimizer : optim.Optimizer, optional
         Optimizer to load the state of, used only if resuming training.
-
-    Returns
-    -------
-    start_epoch : int
-        The epoch to resume training from, if used for resuming training.
     """
     checkpoint = torch.load(path, weights_only=True)
     load_weights(model, checkpoint["model_state_dict"])

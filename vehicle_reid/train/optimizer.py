@@ -48,6 +48,8 @@ def get_param_groups(named_parameters) -> list[dict[str, float | torch.nn.Parame
     """
     Function which sets weight decay, to 0.0 on batch norm and bias layers, using parameter groups.
 
+    Credit: https://github.com/facebookresearch/ConvNeXt/blob/048efcea897d999aed302f2639b6270aedf8d4c8/optim_factory.py#L73
+
     Parameters
     ----------
     named_parameters : Iterator[tuple[str, torch.nn.Parameter]]

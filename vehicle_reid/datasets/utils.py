@@ -59,7 +59,7 @@ def match_dataset(split: str, normalise: bool = True):
     dataset : dataset.VehicleReIdDataset
         The dataset loaded using the configuration file.
     """
-    path = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
+    path = os.path.join(cfg.DATASET.PATH, cfg.DATASET.REL_PATH, cfg.DATASET.NAME)
     image_index_path = os.path.join(path, "image_index.json")
     label_index_path = os.path.join(path, "label_index.json")
 

@@ -21,7 +21,7 @@ def compute_relational_data():
     # train hardcoded as gms matches should only ever use the train set.
     dataset = match_dataset("train")
 
-    output = os.path.join(cfg.MISC.GMS_PATH, cfg.DATASET.NAME)
+    output = os.path.join(cfg.DATASET.PATH, cfg.DATASET.REL_PATH, cfg.DATASET.NAME)
     if not os.path.exists(output):
         os.mkdir(output)
         logger.info(f"Output directory created at: {output}")
@@ -88,6 +88,8 @@ def process_class(
     """
     Calculate the adjacency matrix of a given class of images.
 
+    Credit: https://github.com/adhirajghosh/RPTM_reid/blob/183e1f77a0979ab2ffa08b0bdb1c43ef0f633ad5/utils/create_gms_index.py#L71
+
     Parameters
     ----------
     image_paths : np.ndarray
@@ -152,6 +154,8 @@ def gms_matches(
 
     Takes the keypoints and descriptors instead of the images to reduce repetition of expensive operations.
 
+    Credit: https://github.com/adhirajghosh/RPTM_reid/blob/183e1f77a0979ab2ffa08b0bdb1c43ef0f633ad5/utils/create_gms_index.py#L34
+
     Parameters
     ----------
     bf : cv.BFMatcher
@@ -203,7 +207,7 @@ def gms_matches(
     return len(matches_gms)
 
 
-def load_relational_data(gms_path: str) -> dict[str, list[list[str]]]:
+def load_relational_data(rel_path: str) -> dict[str, list[list[str]]]:
     """
     Load the relational (gms) data for use in training.
 
@@ -218,11 +222,11 @@ def load_relational_data(gms_path: str) -> dict[str, list[list[str]]]:
         dict of classes and their adjacency matrices.
     """
     gms = {}
-    entries = sorted(os.listdir(gms_path))
+    entries = sorted(os.listdir(rel_path))
 
     for name in entries:
         if name != "index.json":
-            with open(os.path.join(gms_path, name), "r") as f:
+            with open(os.path.join(rel_path, name), "r") as f:
                 s = os.path.splitext(name)[0]
                 gms[s] = np.array(json.load(f))
 

@@ -8,6 +8,8 @@ CrossEntropyLoss = nn.CrossEntropyLoss
 class TripletLoss(nn.Module):
     """
     Triplet loss class, for computing the triplet loss between samples.
+
+    Credit: https://github.com/Cysu/open-reid/blob/3293ca79a07ebee7f995ce647aafa7df755207b8/reid/loss/triplet.py
     """
 
     def __init__(self, margin: float = 1.0):

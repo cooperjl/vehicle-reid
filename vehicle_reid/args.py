@@ -11,6 +11,7 @@ COMMANDS = {
     "train": train.train_model,
     "test": eval.test_model,
     "visualise": eval.visualise,
+    "plot": eval.plot,
 }
 
 parser = argparse.ArgumentParser(

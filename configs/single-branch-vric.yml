@@ -1,25 +1,24 @@
 MODEL:
-  ARCH: "resnet50"
-  TWO_BRANCH: True
+  ARCH: "resnet101"
+  TWO_BRANCH: False
 
 INPUT:
   HEIGHT: 128
   WIDTH: 128
-  AUGMENT: True
-  FLIP_PROB: 0.5
-  MEAN: [0.4190, 0.4185, 0.4260]
-  STD: [0.1897, 0.1883, 0.1880]
+  AUGMENT: False
+  MEAN: [0.4822, 0.4821, 0.4899]
+  STD: [0.1994, 0.1982, 0.2063]
 
 DATASET:
-  NAME: "veri"
+  NAME: "vric"
 
 SOLVER:
   OPTIMIZER: "adamw"
-  EPOCHS: 50
+  EPOCHS: 10
   BASE_LR: 0.0001
   WEIGHT_DECAY: 0.0005
+  DECAY_BN_BIAS: True
   BATCH_SIZE: 16
-  AMP: False
 
 LOSS:
   MARGIN: 1.0
@@ -31,3 +30,4 @@ TEST:
 
 MISC:
   LOG_DIR: "./logs/veri/"
+  SEED: 1234

@@ -24,4 +24,6 @@ def test_model():
         load_checkpoint(cfg.MODEL.CHECKPOINT, model)
 
     model.eval()
-    eval_model(model)
+
+    rerank = cfg.DATASET.NAME == "veri"  # Only apply re-ranking on VeRi-776
+    eval_model(model, rerank=rerank)

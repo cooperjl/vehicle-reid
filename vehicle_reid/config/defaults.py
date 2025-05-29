@@ -6,7 +6,6 @@ _C = CN()
 #           Model
 # ---------------------------
 _C.MODEL = CN()
-_C.MODEL.DEVICE = "cuda"
 _C.MODEL.ARCH = "resnet50"
 _C.MODEL.TWO_BRANCH = True
 _C.MODEL.CHECKPOINT = None
@@ -29,6 +28,7 @@ _C.INPUT.STD = [0.229, 0.224, 0.225]
 _C.DATASET = CN()
 _C.DATASET.PATH = "data"
 _C.DATASET.NAME = "veri"
+_C.DATASET.REL_PATH = "rel"
 
 # ---------------------------
 #        Data Loader
@@ -40,18 +40,13 @@ _C.DATALOADER.NUM_WORKERS = 8
 #          Solver
 # ---------------------------
 _C.SOLVER = CN()
-_C.SOLVER.TRIPLET_SELECT = "mean"
 _C.SOLVER.OPTIMIZER = "adam"
-_C.SOLVER.EPOCHS = 50
+_C.SOLVER.EPOCHS = 10
 _C.SOLVER.BASE_LR = 0.005
 _C.SOLVER.WEIGHT_DECAY = 0.0005
 _C.SOLVER.DECAY_BN_BIAS = True
 _C.SOLVER.MOMENTUM = 0.9
-_C.SOLVER.BATCH_SIZE = 8
-_C.SOLVER.MILESTONES = [20, 40, 60]
-_C.SOLVER.GAMMA = 0.1
-_C.SOLVER.AMP = False
-_C.SOLVER.CHECKPOINT_PERIOD = 10
+_C.SOLVER.BATCH_SIZE = 16
 
 # ---------------------------
 #           Loss
@@ -65,16 +60,14 @@ _C.LOSS.LAMBDA_TRI = 1.0
 #           Test
 # ---------------------------
 _C.TEST = CN()
-_C.TEST.BATCH_SIZE = 8
-
+_C.TEST.BATCH_SIZE = 48
 
 # ---------------------------
 #       Miscellaneous
 # ---------------------------
 _C.MISC = CN()
-_C.MISC.GMS_PATH = "gms"
 _C.MISC.LOG_DIR = "logs"
 _C.MISC.SAVE_DIR = "checkpoints"
-_C.MISC.CACHE_PATH = "cache"
+_C.MISC.CACHE_DIR = "cache"
 _C.MISC.SAVE_FREQ = 10
 _C.MISC.SEED = None

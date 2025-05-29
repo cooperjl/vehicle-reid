@@ -7,12 +7,13 @@ from tqdm import tqdm
 from vehicle_reid.datasets import load_data
 
 from .cache import cached_features, extract_features
+from .reranking import reranking
 
 logger = logging.getLogger(__name__)
 
 
 @torch.no_grad()
-def eval_model(model):
+def eval_model(model, rerank: bool = False):
     """
     Main evaluation function, to evaluate a model using the parameters in the specified configuration file,
     such as the dataset.
@@ -21,18 +22,32 @@ def eval_model(model):
     ----------
     model : nn.Module
         Model to extract the features, expects forward to return a single tensor in evaluation mode.
+    rerank : bool, optional
+        Whether to use reranking. Should only likely be used in the final testing of the model.
     """
     _, queryloader = load_data("query")
 
-    distmat, q_labels, g_labels, q_camids, g_camids = calculate_distmat(
-        model, queryloader
+    distmat, q_features, g_features, q_labels, g_labels, q_camids, g_camids = (
+        calculate_distmat(model, queryloader)
     )
-    cmc, mAP = eval_veri(distmat, q_labels, g_labels, q_camids, g_camids, 10)
+    cmc, mAP = evaluate(distmat, q_labels, g_labels, q_camids, g_camids, 10)
 
     logger.info(f"mAP: {mAP:.1%}")
 
     for rank in [1, 5, 10]:
         logger.info(f"Rank-{rank}: {cmc[rank - 1]:.1%}")
+
+    if rerank:
+        re_distmat = reranking(q_features, g_features, k1=40, k2=9, lambda_value=0.3)
+        re_cmc, re_mAP = evaluate(
+            re_distmat, q_labels, g_labels, q_camids, g_camids, 10
+        )
+        logger.info("Re-Ranked results:")
+
+        logger.info(f"mAP: {re_mAP:.1%}")
+
+        for rank in [1, 5, 10]:
+            logger.info(f"Rank-{rank}: {re_cmc[rank - 1]:.1%}")
 
 
 @torch.no_grad()
@@ -40,6 +55,8 @@ def calculate_distmat(model, queryloader):
     """
     Function which calculates the distmat using the parameters in the specified configuration file, such as the dataset.
     It also returns important parameters for the evaluation of the model, such as labels and camera ids.
+
+    Credit: https://github.com/Cysu/open-reid/blob/3293ca79a07ebee7f995ce647aafa7df755207b8/reid/evaluators.py#L62
 
     Parameters
     ----------
@@ -54,6 +71,10 @@ def calculate_distmat(model, queryloader):
     -------
     distmat : np.ndarray
         distance matrix of shape (num_query, num_gallery).
+    q_features: torch.Tensor
+        Tensor of query set features, used in reranking
+    g_features: torch.Tensor
+        Tensor of gallery set features, used in reranking
     q_labels : np.ndarray
         1d array containing identities of each query instance.
     g_labels : np.ndarray
@@ -88,11 +109,11 @@ def calculate_distmat(model, queryloader):
     distmat.addmm_(q_features, g_features.t(), beta=1, alpha=-2)
     distmat = distmat.numpy()
 
-    return distmat, q_labels, g_labels, q_camids, g_camids
+    return distmat, q_features, g_features, q_labels, g_labels, q_camids, g_camids
 
 
 @torch.no_grad()
-def eval_veri(
+def evaluate(
     distmat: np.ndarray,
     q_pids: np.ndarray,
     g_pids: np.ndarray,

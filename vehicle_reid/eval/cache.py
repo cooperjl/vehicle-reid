@@ -19,11 +19,11 @@ def cached_features(model, training: bool) -> dict:
     should_cache = cfg.MODEL.CHECKPOINT is not None and training is False
 
     if should_cache:
-        basename = os.path.split(os.path.basename(cfg.MODEL.CHECKPOINT))[0]
+        basename = os.path.splitext(os.path.basename(cfg.MODEL.CHECKPOINT))[0]
     else:
         basename = ""
 
-    filepath = os.path.join(cfg.MISC.CACHE_PATH, f"{basename}-cache.pth")
+    filepath = os.path.join(cfg.MISC.CACHE_DIR, f"{basename}-cache.pth")
 
     if should_cache and os.path.isfile(filepath):
         cache_dict = torch.load(filepath, weights_only=False)
@@ -42,6 +42,9 @@ def cached_features(model, training: bool) -> dict:
         }
 
         if should_cache:
+            if not os.path.exists(cfg.MISC.CACHE_DIR):
+                os.mkdir(cfg.MISC.CACHE_DIR)
+
             torch.save(cache_dict, filepath)
             logger.info("Cached gallery features")
 
@@ -52,6 +55,8 @@ def cached_features(model, training: bool) -> dict:
 def extract_features(model, dataloader, desc: str = ""):
     """
     Function which extracts the features over the dataset using the dataloader.
+
+    Credit: https://github.com/adhirajghosh/RPTM_reid/blob/183e1f77a0979ab2ffa08b0bdb1c43ef0f633ad5/eval.py#L17
 
     Parameters
     ----------
