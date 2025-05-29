@@ -1,6 +1,18 @@
 # Vehicle Re-Identification with Deep Learning
 University of York dissertation project in the field of vehicle re-identification.
 
+## Architecture
+![Architecture Diagram](assets/arch-diagram.pdf)
+## Results
+Table of final results, where the VeRi-776* row includes
+re-ranked results.
+
+| Dataset |  mAP  | Rank-1 | Rank-5 | Rank-10 |
+| ------- | ----- | ------ | ------ | ------- |
+|VeRi-776 | 50.2% | 81.8%  | 90.7%  | 93.1%   |
+|VeRi-776*| 55.5% | 81.4%  | 88.9%  | 91.3%   |
+| VRIC    | 58.8% | 45.8%  | 75.1%  | 83.8%   |
+
 ## Installation
 Recommended usage is with uv:
 ```shell
